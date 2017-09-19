@@ -37,8 +37,9 @@ func (c *TopicController) Save() {
 		_, user := filters.IsLogin(c.Ctx)
 		topic := models.Topic{Title: title, Content: content, Section: &section, User: &user}
 		id := models.SaveTopic(&topic)
-
-		models.SaveTopicFactor()
+		topicFactor := models.TopicFactor{}.New(section.Id)
+		topicFactor.Topic = &topic
+		models.SaveTopicFactor(topicFactor)
 		c.Redirect("/topic/" + strconv.FormatInt(id, 10), 302)
 	}
 }
