@@ -1,0 +1,30 @@
+### Go
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+### project
+# coding
+.idea
+*.iml
+.DS_Store
+
+# deps
+/node_modules/
+
+# config
+/config/local.json
+/config/private.json
+/config/cert/
+
+# runtime
+/log/
+/runtime.config.json
+
+# build
+/build
+/doc/
+/binary
+/Dockerfile
+/kubernetes/
