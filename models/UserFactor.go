@@ -1,6 +1,9 @@
 package models
 
-import "github.com/astaxie/beego/orm"
+import (
+	"github.com/astaxie/beego/orm"
+)
+
 //分享 博客 招聘 问答 框架 新闻 语言 数据库 外包 比赛
 type UserFactor struct {
 	Id           int   `orm:"pk;auto"`
@@ -33,4 +36,19 @@ func SaveUserFactor(userFactor *UserFactor) int64 {
 func UpdateUserFactor(userFactor *UserFactor) {
 	o := orm.NewOrm()
 	o.Update(userFactor)
+}
+
+func (UserFactor) New() *UserFactor {
+	return &UserFactor{
+		ShareFactor : 10,
+		BlogFactor  :10,
+		WorkFactor  :10,
+		QAAFactor    :10,
+		FrameFactor  :10,
+		NewsFactor   :10,
+		LangFactor   :10,
+		DBFactor     :10,
+		OutBagFactor :10,
+		MatchFactor  :10,
+	}
 }

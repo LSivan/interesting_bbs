@@ -88,10 +88,14 @@ func (c *IndexController) Register() {
 		var token = uuid.Rand().Hex()
 		user := models.User{Username: username, Password: password, Avatar: "/static/imgs/avatar.png", Token: token}
 		models.SaveUser(&user)
-		commonUserId,_ := beego.AppConfig.Int("constant.common_user_id") // 默认注册普通用户的角色
+		/** 默认普通用户的角色 **/
+		commonUserId,_ := beego.AppConfig.Int("constant.common_user_id")
 		models.SaveUserRole(user.Id, commonUserId)
+		/** 默认的用户因子 **/
+		userFactor := models.UserFactor{}.New()
+		userFactor.User = &user
+		models.SaveUserFactor(userFactor)
 
-		// others are ordered as cookie's max age time, path,domain, secure and httponly.
 		c.SetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"), token, 30 * 24 * 60 * 60, "/", beego.AppConfig.String("cookie.domain"), false, true)
 		c.Redirect("/", 302)
 	}
