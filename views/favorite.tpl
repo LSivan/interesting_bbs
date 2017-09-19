@@ -29,11 +29,9 @@
               <span class="hidden-sm hidden-xs">{{.View}}次浏览</span>
               <span>•</span>
               <span>{{.InTime | timeago}}</span>
-              {{if .LastReplyUser }}
-                {{if gt .LastReplyUser.Id 0 }}
+              {{if .LastReplyUser}}
                 <span>•</span>
                 <span>最后回复来自 <a href="/user/{{.LastReplyUser.Username}}">{{.LastReplyUser.Username}}</a></span>
-                {{end}}
               {{end}}
             </p>
           </div>

@@ -6,6 +6,7 @@ import (
 	"git.oschina.net/gdou-geek-bbs/models"
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/utils"
+	"time"
 )
 
 type ReplyController struct {
@@ -23,6 +24,8 @@ func (c *ReplyController) Save() {
 		} else {
 			_, user := filters.IsLogin(c.Ctx)
 			topic := models.FindTopicById(tid)
+			topic.LastReplyUser = &user
+			topic.LastReplyTime = time.Now()
 			reply := models.Reply{Content: content, Topic: &topic, User: &user, Up: 0}
 			models.SaveReply(&reply)
 			models.IncrReplyCount(&topic)

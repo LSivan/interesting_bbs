@@ -16,6 +16,8 @@ func init() {
     beego.Router("/register", &controllers.IndexController{}, "POST:Register")
     beego.Router("/logout", &controllers.IndexController{}, "GET:Logout")
     beego.Router("/about", &controllers.IndexController{}, "GET:About")
+    beego.Router("/favorite", &controllers.IndexController{}, "GET:Favorite")
+
 
     beego.InsertFilter("/topic/create", beego.BeforeRouter, filters.HasPermission)
     beego.Router("/topic/create", &controllers.TopicController{}, "GET:Create")

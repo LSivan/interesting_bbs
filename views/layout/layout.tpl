@@ -27,8 +27,11 @@
       </div>
       <div id="navbar" class="navbar-collapse collapse header-navbar">
         <ul class="nav navbar-nav">
-            <li {{ if .favorite}} class="active" {{ end }}>
-                 <a href="#">猜你喜欢</a>
+            <li {{ if .IsIndex}} class="active" {{ end }}>
+                 <a href="/">首页</a>
+            </li>
+            <li {{ if .IsFavorite}} class="active" {{ end }}>
+                 <a href="/favorite">猜你喜欢</a>
             </li>
             <li {{ if .favorite}} class="active" {{ end }}>
                  <a href="#">七天热门</a>
