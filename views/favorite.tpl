@@ -64,9 +64,9 @@
       onPageClicked: function(e,originalEvent,type,page){
         var s = {{.S}};
         if (s > 0) {
-          window.location.href = "/?p=" + page + "&s={{.S}}"
+          window.location.href = "/favorite?p=" + page + "&s={{.S}}"
         } else {
-          window.location.href = "/?p=" + page
+          window.location.href = "/favorite?p=" + page
         }
       }
     });

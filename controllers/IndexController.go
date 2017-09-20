@@ -134,5 +134,5 @@ func (c *IndexController) Favorite() {
 	c.Data["Page"] = models.FavoritePageTopic(p, size, &user)
 	//c.Data["Sections"] = models.FindAllSection()
 	c.Layout = "layout/layout.tpl"
-	c.TplName = "index.tpl"
+	c.TplName = "favorite.tpl"
 }

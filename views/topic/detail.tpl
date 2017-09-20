@@ -23,6 +23,10 @@
                 <span>•</span>
                 <span><a href="javascript:if(confirm('确定删除吗?')) location.href='/topic/delete/{{.Topic.Id}}'">删除</a></span>
               {{end}}
+              <span>•</span>
+              <span><a href="javascript:void(0)">拉黑</a></span>
+              <span>•</span>
+              <span><a href="javascript:void(0)">收藏</a></span>
             </p>
           </div>
           <div class="media-right">

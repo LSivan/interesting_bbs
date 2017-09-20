@@ -75,11 +75,15 @@ func FavoritePageTopic(p int, size int, user *User) utils.Page {
 		logs.Debug("FavoritePageTopic: ", err)
 	}
 	for i, t := range topics {
-		b,user := FindUserById(t.User.Id)
+		b, user := FindUserById(t.User.Id)
 		if b {
 			t.User = &user
 		}
-		(topics)[i] = t// 至关重要的一步,TODO 可以写个博客来研究下
+		b, section := FindSectionById(t.Section.Id)
+		if b {
+			t.Section = &section
+		}
+		(topics)[i] = t // 至关重要的一步,TODO 可以写个博客来研究下
 	}
 	c, _ := strconv.Atoi(strconv.FormatInt(count, 10))
 	return utils.PageUtil(c, p, size, &topics)
@@ -94,7 +98,7 @@ func IncrView(topic *Topic) {
 func IncrReplyCount(topic *Topic) {
 	o := orm.NewOrm()
 	topic.ReplyCount = topic.ReplyCount + 1
-	o.Update(topic, "ReplyCount","LastReplyUser","LastReplyTime")
+	o.Update(topic, "ReplyCount", "LastReplyUser", "LastReplyTime")
 }
 
 func ReduceReplyCount(topic *Topic) {
