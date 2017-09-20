@@ -15,6 +15,7 @@
               <span>{{.Topic.View}}次点击</span>
               <span>•</span>
               <span>来自 <a href="/?s={{.Topic.Section.Id}}">{{.Topic.Section.Name}}</a></span>
+              {{ if eq .UserInfo.Id .Topic.User.Id}}
               {{if haspermission .UserInfo.Id "topic:edit"}}
                 <span>•</span>
                 <span><a href="/topic/edit/{{.Topic.Id}}">编辑</a></span>
@@ -22,6 +23,7 @@
               {{if haspermission .UserInfo.Id "topic:delete"}}
                 <span>•</span>
                 <span><a href="javascript:if(confirm('确定删除吗?')) location.href='/topic/delete/{{.Topic.Id}}'">删除</a></span>
+              {{end}}
               {{end}}
               <span>•</span>
               <span><a href="javascript:void(0)">拉黑</a></span>
