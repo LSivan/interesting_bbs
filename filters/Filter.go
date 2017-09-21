@@ -37,43 +37,45 @@ var HasPermission = func(ctx *context.Context) {
 		}
 	}
 }
-var getUserFactor = func(user models.User) (map[string]int, map[string]int) {
-	return models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
-}
-var getTopicFactor = func(topic models.Topic) (map[string]int, map[string]int) {
-	return models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
-}
-var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
-	ok, user := IsLogin(ctx)
-	flag := ctx.Input.Query("flag")
-	if ok && flag == "true"{ // 用户已登录才进行
-		id := ctx.Input.Param(":id")
-		/******** 得到用户以及话题的特征因子和无关因子 *********/
-		userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
-		topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
-		/*
-			用户中与ThingFeatureFactor相同的因子，全部加上因子的变化度；
-			用户中与ThingUnusedFactor相同的因子，全部减去因子的变化度。
-			图书中与UserFeatureFactor相同的因子，全部加上因子的变化度；
-			图书中与UserUnusedFactor相同的因子，全部减去因子的变化度。
-		*/
-		topicFactorChangeMap := make(map[string]int)
-		for factor, _ := range userFeatureFactorMap {
-			topicFactorChangeMap[factor] = 1
+
+var withLoginCheck = func(fn func(), ctx *context.Context) {
+	ok, _ := IsLogin(ctx)
+
+	if ok { // 用户已登录才进行
+		reg := regexp.MustCompile(`/topic/([0-9]+)`)
+		if reg.MatchString(ctx.Input.URI()) { // 如果是查看话题详情
+			flag := ctx.Input.Query("flag")
+			if flag == "true" { // 则看是不是在猜你喜欢页面过来的请求
+				fn()
+			}
+		} else { // 不匹配，直接执行
+			fn()
 		}
-		for factor, _ := range userUnusedFactorMap {
-			topicFactorChangeMap[factor] = -1
-		}
-		models.UpdateTopicFactorByMap(topicFactorChangeMap, utils.MustInt(id))
-		userFactorChangeMap := make(map[string]int)
-		for factor, _ := range topicFeatureFactorMap {
-			userFactorChangeMap[factor] = 1
-		}
-		for factor, _ := range topicUnusedFactorMap {
-			userFactorChangeMap[factor] = -1
-		}
-		models.UpdateUserFactorByMap(userFactorChangeMap, user.Id)
 	}
+}
+
+// TODO 因子的更改不需要实时修改，而是用临时表，一是数据库写的压力减少，而是避免数据一直更新
+// TODO 一些不变的数据使用redis，比如话题等
+// TODO 猜你喜欢中阅读过的文章一段时间内不展示
+var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
+	withLoginCheck(
+		func() {
+			ChangeFactor(1, ctx)
+		}, ctx)
+
+}
+
+var BlackChangeFactor = func(ctx *context.Context) { // 用户拉黑时执行
+	withLoginCheck(
+		func() {
+			ChangeFactor(2, ctx)
+		}, ctx)
+}
+var CollectChangeFactor = func(ctx *context.Context) { // 用户收藏时执行
+	withLoginCheck(
+		func() {
+			ChangeFactor(4, ctx)
+		}, ctx)
 }
 var FilterNoCache = func(ctx *context.Context) {
 	ctx.Output.Header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -86,4 +88,42 @@ var FilterUser = func(ctx *context.Context) {
 	if !ok {
 		ctx.Redirect(302, "/login")
 	}
+}
+
+
+func ChangeFactor(changeValue int, ctx *context.Context) {
+	_, user := IsLogin(ctx)
+	id := ctx.Input.Param(":id")
+	/******** 得到用户以及话题的特征因子和无关因子 *********/
+	userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
+	topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
+	/*
+		用户中与ThingFeatureFactor相同的因子，全部加上因子的变化度；
+		用户中与ThingUnusedFactor相同的因子，全部减去因子的变化度。
+		图书中与UserFeatureFactor相同的因子，全部加上因子的变化度；
+		图书中与UserUnusedFactor相同的因子，全部减去因子的变化度。
+	*/
+	topicFactorChangeMap := make(map[string]int)
+	for factor := range userFeatureFactorMap {
+		topicFactorChangeMap[factor] = changeValue
+	}
+	for factor := range userUnusedFactorMap {
+		topicFactorChangeMap[factor] = -1 * changeValue
+	}
+	models.UpdateTopicFactorByMap(topicFactorChangeMap, utils.MustInt(id))
+	userFactorChangeMap := make(map[string]int)
+	for factor := range topicFeatureFactorMap {
+		userFactorChangeMap[factor] = changeValue
+	}
+	for factor := range topicUnusedFactorMap {
+		userFactorChangeMap[factor] = -1 * changeValue
+	}
+	models.UpdateUserFactorByMap(userFactorChangeMap, user.Id)
+}
+
+var getUserFactor = func(user models.User) (map[string]int, map[string]int) {
+	return models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
+}
+var getTopicFactor = func(topic models.Topic) (map[string]int, map[string]int) {
+	return models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
 }

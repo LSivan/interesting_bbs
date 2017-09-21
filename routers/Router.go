@@ -28,6 +28,7 @@ func init() {
 	beego.Router("/topic/edit/:id([0-9]+)", &controllers.TopicController{}, "POST:Update")
 	beego.InsertFilter("/topic/delete/:id([0-9]+)", beego.BeforeRouter, filters.HasPermission)
 	beego.Router("/topic/delete/:id([0-9]+)", &controllers.TopicController{}, "GET:Delete")
+	beego.InsertFilter("/topic/collect/:id([0-9]+)", beego.BeforeRouter, filters.CollectChangeFactor)
 	beego.Router("/topic/collect/:id([0-9]+)", &controllers.TopicController{}, "POST:Collect")
 	beego.Router("/topic/cancel_collect/:id([0-9]+)", &controllers.TopicController{}, "POST:CancelCollect")
 

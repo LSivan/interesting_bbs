@@ -29,13 +29,16 @@
                       {{end}}
                   {{end}}
                   <span>•</span>
-                  <span><a href="/topic/black/{{.Topic.Id}}">拉黑</a></span>
+                  <span><a href="/topic/black/{{.Topic.Id}}" class="collect popover-hide" title="拉黑之后不会再推荐给你哦" data-container="body"
+                            data-toggle="popover" data-placement="top">拉黑</a></span>
                   {{ if iscollect .UserInfo .Topic }}
                      <span>•</span>
-                     <span><a href="javascript:cancelCollect({{.Topic.Id}})" class="collect">取消收藏</a></span>
+                     <span><a href="javascript:cancelCollect({{.Topic.Id}})" class="collect popover-hide" title="将文章放出来" data-container="body"
+                            data-toggle="popover" data-placement="top">取消收藏</a></span>
                   {{else}}
                      <span>•</span>
-                     <span><a href="javascript:collect({{.Topic.Id}})" class="collect">收藏</a></span>
+                     <span><a href="javascript:collect({{.Topic.Id}})" class="collect popover-hide" title="好文章收藏起来日后回味" data-container="body"
+                            data-toggle="popover" data-placement="top">收藏</a></span>
                   {{end}}
               {{ end }}
             </p>
