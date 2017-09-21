@@ -1,52 +1,89 @@
 package filters
 
 import (
-    "github.com/astaxie/beego/context"
-    "git.oschina.net/gdou-geek-bbs/models"
-    "github.com/astaxie/beego"
-    "regexp"
+	"git.oschina.net/gdou-geek-bbs/models"
+	"git.oschina.net/gdou-geek-bbs/utils"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/context"
+	"regexp"
 )
 
 func IsLogin(ctx *context.Context) (bool, models.User) {
-    token, flag := ctx.GetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"))
-    var user models.User
-    if flag {
-        flag, user = models.FindUserByToken(token)
-    }
-    return flag, user
+	token, flag := ctx.GetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"))
+	var user models.User
+	if flag {
+		flag, user = models.FindUserByToken(token)
+	}
+	return flag, user
 }
 
 var HasPermission = func(ctx *context.Context) {
-    ok, user := IsLogin(ctx)
-    if !ok {
-        ctx.Redirect(302, "/login")
-    } else {
-        permissions := models.FindPermissionByUser(user.Id)
-        url := ctx.Request.RequestURI
-        beego.Debug("url: ", url)
-        var flag = false
-        for _, v := range permissions {
-            if a, _ := regexp.MatchString(v.Url, url); a {
-                flag = true
-                break
-            }
-        }
-        if !flag {
-            ctx.WriteString("你没有权限访问这个页面")
-        }
-    }
+	ok, user := IsLogin(ctx)
+	if !ok {
+		ctx.Redirect(302, "/login")
+	} else {
+		permissions := models.FindPermissionByUser(user.Id)
+		url := ctx.Request.RequestURI
+		beego.Debug("url: ", url)
+		var flag = false
+		for _, v := range permissions {
+			if a, _ := regexp.MatchString(v.Url, url); a {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			ctx.WriteString("你没有权限访问这个页面")
+		}
+	}
 }
-
+var getUserFactor = func(user models.User) (map[string]int, map[string]int) {
+	return models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
+}
+var getTopicFactor = func(topic models.Topic) (map[string]int, map[string]int) {
+	return models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
+}
+var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
+	ok, user := IsLogin(ctx)
+	flag := ctx.Input.Query("flag")
+	if ok && flag == "true"{ // 用户已登录才进行
+		id := ctx.Input.Param(":id")
+		/******** 得到用户以及话题的特征因子和无关因子 *********/
+		userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
+		topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
+		/*
+			用户中与ThingFeatureFactor相同的因子，全部加上因子的变化度；
+			用户中与ThingUnusedFactor相同的因子，全部减去因子的变化度。
+			图书中与UserFeatureFactor相同的因子，全部加上因子的变化度；
+			图书中与UserUnusedFactor相同的因子，全部减去因子的变化度。
+		*/
+		topicFactorChangeMap := make(map[string]int)
+		for factor, _ := range userFeatureFactorMap {
+			topicFactorChangeMap[factor] = 1
+		}
+		for factor, _ := range userUnusedFactorMap {
+			topicFactorChangeMap[factor] = -1
+		}
+		models.UpdateTopicFactorByMap(topicFactorChangeMap, utils.MustInt(id))
+		userFactorChangeMap := make(map[string]int)
+		for factor, _ := range topicFeatureFactorMap {
+			userFactorChangeMap[factor] = 1
+		}
+		for factor, _ := range topicUnusedFactorMap {
+			userFactorChangeMap[factor] = -1
+		}
+		models.UpdateUserFactorByMap(userFactorChangeMap, user.Id)
+	}
+}
 var FilterNoCache = func(ctx *context.Context) {
-    ctx.Output.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-    ctx.Output.Header("Pragma", "no-cache")
-    ctx.Output.Header("Expires","0")
+	ctx.Output.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+	ctx.Output.Header("Pragma", "no-cache")
+	ctx.Output.Header("Expires", "0")
 }
-
 
 var FilterUser = func(ctx *context.Context) {
-    ok, _ := IsLogin(ctx)
-    if !ok {
-        ctx.Redirect(302, "/login")
-    }
+	ok, _ := IsLogin(ctx)
+	if !ok {
+		ctx.Redirect(302, "/login")
+	}
 }

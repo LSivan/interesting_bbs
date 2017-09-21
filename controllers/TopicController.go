@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"git.oschina.net/gdou-geek-bbs/models"
-	"strconv"
 	"git.oschina.net/gdou-geek-bbs/filters"
+	"git.oschina.net/gdou-geek-bbs/models"
+	"git.oschina.net/gdou-geek-bbs/utils"
+	"github.com/astaxie/beego"
+	"strconv"
 )
 
 type TopicController struct {
@@ -40,7 +41,7 @@ func (c *TopicController) Save() {
 		topicFactor := models.TopicFactor{}.New(section.Id)
 		topicFactor.Topic = &topic
 		models.SaveTopicFactor(topicFactor)
-		c.Redirect("/topic/" + strconv.FormatInt(id, 10), 302)
+		c.Redirect("/topic/"+strconv.FormatInt(id, 10), 302)
 	}
 }
 
@@ -50,7 +51,7 @@ func (c *TopicController) Detail() {
 	if tid > 0 {
 		c.Data["IsLogin"], c.Data["UserInfo"] = filters.IsLogin(c.Controller.Ctx)
 		topic := models.FindTopicById(tid)
-		models.IncrView(&topic)//查看+1
+		models.IncrView(&topic) //查看+1
 		c.Data["PageTitle"] = topic.Title
 		c.Data["Topic"] = topic
 		c.Data["Replies"] = models.FindReplyByTopic(&topic)
@@ -79,16 +80,16 @@ func (c *TopicController) Edit() {
 
 func (c *TopicController) Update() {
 	flash := beego.NewFlash()
-    id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
 	title, content, sid := c.Input().Get("title"), c.Input().Get("content"), c.Input().Get("sid")
 	if len(title) == 0 || len(title) > 120 {
 		flash.Error("话题标题不能为空且不能超过120个字符")
 		flash.Store(&c.Controller)
-		c.Redirect("/topic/edit/" + strconv.Itoa(id), 302)
+		c.Redirect("/topic/edit/"+strconv.Itoa(id), 302)
 	} else if len(sid) == 0 {
 		flash.Error("请选择话题版块")
 		flash.Store(&c.Controller)
-		c.Redirect("/topic/edit/" + strconv.Itoa(id), 302)
+		c.Redirect("/topic/edit/"+strconv.Itoa(id), 302)
 	} else {
 		s, _ := strconv.Atoi(sid)
 		section := models.Section{Id: s}
@@ -97,7 +98,7 @@ func (c *TopicController) Update() {
 		topic.Content = content
 		topic.Section = &section
 		models.UpdateTopic(&topic)
-		c.Redirect("/topic/" + strconv.Itoa(id), 302)
+		c.Redirect("/topic/"+strconv.Itoa(id), 302)
 	}
 }
 
@@ -111,4 +112,42 @@ func (c *TopicController) Delete() {
 	} else {
 		c.Ctx.WriteString("话题不存在")
 	}
+}
+
+func (c *TopicController) Collect() {
+	id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	result := utils.Result{Code: 500, Description: "话题不存在"}
+	c.Data["json"] = &result
+	if id > 0 {
+
+		topic := models.FindTopicById(id)
+		_, user := filters.IsLogin(c.Controller.Ctx)
+		b, _ := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 1)
+		if !b { // 确保不存在
+			models.SaveUserTopic(&models.UserTopicList{Topic: &topic, User: &user, ActionType: 1}) // 1为收藏
+			models.IncrCollectCount(&topic)
+			result := utils.Result{Code: 200, Description: "成功"}
+			c.Data["json"] = &result
+		}
+	}
+	c.ServeJSON()
+}
+
+func (c *TopicController) CancelCollect() {
+	id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	result := utils.Result{Code: 500, Description: "话题不存在"}
+	c.Data["json"] = &result
+	if id > 0 {
+
+		topic := models.FindTopicById(id)
+		_, user := filters.IsLogin(c.Controller.Ctx)
+		b, userTopicList := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 1)
+		if b { // 确保存在
+			models.DeleteUserTopic(userTopicList)
+			models.ReduceCollectCount(&topic)
+			result := utils.Result{Code: 200, Description: "成功"}
+			c.Data["json"] = &result
+		}
+	}
+	c.ServeJSON()
 }

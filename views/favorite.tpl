@@ -17,7 +17,7 @@
           </div>
           <div class="media-body">
             <div class="title">
-              <a href="/topic/{{.Id}}">{{.Title}}</a>
+              <a href="/topic/{{.Id}}?flag=true">{{.Title}}</a>
             </div>
             <p class="gray">
               <span class="label label-primary">{{.Section.Name}}</span>
@@ -27,6 +27,8 @@
               <span class="hidden-sm hidden-xs">{{.ReplyCount}}个回复</span>
               <span class="hidden-sm hidden-xs">•</span>
               <span class="hidden-sm hidden-xs">{{.View}}次浏览</span>
+              <span>•</span>
+              <span class="hidden-sm hidden-xs">{{.CollectCount}}次收藏</span>
               <span>•</span>
               <span>{{.InTime | timeago}}</span>
               {{if .LastReplyUser}}

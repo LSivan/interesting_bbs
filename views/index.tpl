@@ -28,6 +28,8 @@
               <span class="hidden-sm hidden-xs">•</span>
               <span class="hidden-sm hidden-xs">{{.View}}次浏览</span>
               <span>•</span>
+              <span class="hidden-sm hidden-xs">{{.CollectCount}}次收藏</span>
+              <span>•</span>
               <span>{{.InTime | timeago}}</span>
               {{if .LastReplyUser }}
                 {{if gt .LastReplyUser.Id 0 }}

@@ -22,6 +22,7 @@ func init(){
         new(models.Permission),
 		new(models.UserFactor),
 		new(models.TopicFactor),
+		new(models.UserTopicList),
 	)
     orm.RunSyncdb("default", false, true)
 }

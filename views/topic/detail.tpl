@@ -14,21 +14,30 @@
               <span>•</span>
               <span>{{.Topic.View}}次点击</span>
               <span>•</span>
+              <span>{{.Topic.CollectCount}}次收藏</span>
+              <span>•</span>
               <span>来自 <a href="/?s={{.Topic.Section.Id}}">{{.Topic.Section.Name}}</a></span>
-              {{ if eq .UserInfo.Id .Topic.User.Id}}
-              {{if haspermission .UserInfo.Id "topic:edit"}}
-                <span>•</span>
-                <span><a href="/topic/edit/{{.Topic.Id}}">编辑</a></span>
-              {{end}}
-              {{if haspermission .UserInfo.Id "topic:delete"}}
-                <span>•</span>
-                <span><a href="javascript:if(confirm('确定删除吗?')) location.href='/topic/delete/{{.Topic.Id}}'">删除</a></span>
-              {{end}}
-              {{end}}
-              <span>•</span>
-              <span><a href="javascript:void(0)">拉黑</a></span>
-              <span>•</span>
-              <span><a href="javascript:void(0)">收藏</a></span>
+              {{ if .IsLogin}}
+                  {{ if eq .UserInfo.Id .Topic.User.Id}}
+                      {{if haspermission .UserInfo.Id "topic:edit"}}
+                        <span>•</span>
+                        <span><a href="/topic/edit/{{.Topic.Id}}">编辑</a></span>
+                      {{end}}
+                      {{if haspermission .UserInfo.Id "topic:delete"}}
+                        <span>•</span>
+                        <span><a href="javascript:if(confirm('确定删除吗?')) location.href='/topic/delete/{{.Topic.Id}}'">删除</a></span>
+                      {{end}}
+                  {{end}}
+                  <span>•</span>
+                  <span><a href="/topic/black/{{.Topic.Id}}">拉黑</a></span>
+                  {{ if iscollect .UserInfo .Topic }}
+                     <span>•</span>
+                     <span><a href="javascript:cancelCollect({{.Topic.Id}})" class="collect">取消收藏</a></span>
+                  {{else}}
+                     <span>•</span>
+                     <span><a href="javascript:collect({{.Topic.Id}})" class="collect">收藏</a></span>
+                  {{end}}
+              {{ end }}
             </p>
           </div>
           <div class="media-right">
@@ -117,4 +126,54 @@
       alert("请先登录");
     }
   }
+  function collect(id) {
+    var isLogin = {{.IsLogin}};
+    if(isLogin) {
+      $.ajax({
+        url: "/topic/collect/"+id,
+        async: true,
+        cache: false,
+        type: "post",
+        dataType: "json",
+        success: function (data) {
+          if(data.Code == 200) {
+            /*$(".collect").text('取消收藏');
+            $(".collect").attr("href","javascript:cancelCollect("+id+")");*/
+            window.location.href="/topic/"+id
+          } else {
+            alert(data.Description)
+          }
+        }
+      });
+    } else {
+      alert("请先登录");
+    }
+  }
+  function cancelCollect(id) {
+      var sureCancel = confirm("确定取消收藏吗?");
+      if (sureCancel == false ){
+        return
+      }
+      var isLogin = {{.IsLogin}};
+      if(isLogin) {
+        $.ajax({
+          url: "/topic/cancel_collect/"+id,
+          async: true,
+          cache: false,
+          type: "post",
+          dataType: "json",
+          success: function (data) {
+            if(data.Code == 200) {
+              /*$(".collect").text('收藏');
+              $(".collect").attr("href","javascript:collect("+id+")");*/
+              window.location.href="/topic/"+id
+            } else {
+              alert(data.Description)
+            }
+          }
+        });
+      } else {
+        alert("请先登录");
+      }
+    }
 </script>

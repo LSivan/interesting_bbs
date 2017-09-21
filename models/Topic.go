@@ -17,6 +17,7 @@ type Topic struct {
 	Section       *Section  `orm:"rel(fk)"`
 	View          int       `orm:"default(0)"`
 	ReplyCount    int       `orm:"default(0)"`
+	CollectCount  int       `orm:"default(0)"`
 	LastReplyUser *User     `orm:"rel(fk);null"`
 	LastReplyTime time.Time `orm:"auto_now_add;type(datetime)"`
 }
@@ -105,6 +106,18 @@ func ReduceReplyCount(topic *Topic) {
 	o := orm.NewOrm()
 	topic.ReplyCount = topic.ReplyCount - 1
 	o.Update(topic, "ReplyCount")
+}
+
+func IncrCollectCount(topic *Topic) {
+	o := orm.NewOrm()
+	topic.CollectCount = topic.CollectCount + 1
+	o.Update(topic, "CollectCount")
+}
+
+func ReduceCollectCount(topic *Topic) {
+	o := orm.NewOrm()
+	topic.CollectCount = topic.CollectCount - 1
+	o.Update(topic, "CollectCount")
 }
 
 func FindTopicByUser(user *User, limit int) []*Topic {
