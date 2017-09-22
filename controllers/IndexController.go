@@ -3,7 +3,6 @@ package controllers
 import (
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/models"
-	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
 	"github.com/sluu99/uuid"
 	"strconv"

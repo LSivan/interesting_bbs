@@ -57,6 +57,8 @@ var withLoginCheck = func(fn func(), ctx *context.Context) {
 // TODO 因子的更改不需要实时修改，而是用临时表，一是数据库写的压力减少，而是避免数据一直更新
 // TODO 一些不变的数据使用redis，比如话题等
 // TODO 猜你喜欢中阅读过的文章一段时间内不展示
+// TODO 查看他人资料时还可以看到它的收藏
+// TODO 更多话题/回复/收藏
 var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
 	withLoginCheck(
 		func() {

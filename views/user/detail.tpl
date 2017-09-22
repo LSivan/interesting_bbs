@@ -74,6 +74,37 @@
         <a href="/user/{{.CurrentUserInfo.Username}}/replies">{{.CurrentUserInfo.Username}}更多回复&gt;&gt;</a>
       </div>
     </div>
+    <div class="panel panel-default">
+          <div class="panel-heading">{{.CurrentUserInfo.Username}}收藏的话题</div>
+            {{range .Collects}}
+            <div class="media">
+                      <div class="media-body">
+                        <div class="title">
+                          <a href="/topic/{{.Id}}">{{.Title}}</a>
+                        </div>
+                        <p>
+                          <a href="/?tab={{.Section.Id}}">{{.Section.Name}}</a>
+                          <span>•</span>
+                          <span><a href="/user/{{.User.Username}}">{{.User.Username}}</a></span>
+                          <span class="hidden-sm hidden-xs">•</span>
+                          <span class="hidden-sm hidden-xs">{{.ReplyCount}}个回复</span>
+                          <span class="hidden-sm hidden-xs">•</span>
+                          <span class="hidden-sm hidden-xs">{{.View}}次浏览</span>
+                          <span>•</span>
+                          <span>{{.InTime | timeago}}</span>
+                          {{if .LastReplyUser}}
+                            <span>•</span>
+                            <span>最后回复来自 <a href="/user/{{.LastReplyUser.Username}}">{{.LastReplyUser.Username}}</a></span>
+                          {{end}}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="divide mar-top-5"></div>
+            {{end}}
+          <div class="panel-footer">
+            <a href="/user/{{.CurrentUserInfo.Username}}/replies">{{.CurrentUserInfo.Username}}更多的收藏&gt;&gt;</a>
+          </div>
+        </div>
     {{else}}
     <div class="panel panel-default">
       <div class="panel-body">用户不存在</div>
