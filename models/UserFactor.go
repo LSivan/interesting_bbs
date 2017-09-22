@@ -1,10 +1,11 @@
 package models
 
 import (
+	"bytes"
 	"github.com/astaxie/beego/orm"
 	"sort"
-	"bytes"
 	"strconv"
+	"git.oschina.net/gdou-geek-bbs/utils"
 )
 
 //分享 博客 招聘 问答 框架 新闻 语言 数据库 外包 比赛
@@ -41,24 +42,58 @@ func UpdateUserFactor(userFactor *UserFactor) {
 	o.Update(userFactor)
 }
 
-func (UserFactor) New() *UserFactor {
+func (UserFactor) New(sections []string) *UserFactor {
+	factorValues := [10]int{}
+	defaultFactorValue, featureFactorValue := 10, 10
+	switch len(sections) {
+	case 1:
+		defaultFactorValue = 9
+		featureFactorValue = 19
+	case 2:
+		defaultFactorValue = 8
+		featureFactorValue = 18
+	case 3:
+		defaultFactorValue = 7
+		featureFactorValue = 17
+	case 4:
+		defaultFactorValue = 6
+		featureFactorValue = 16
+	case 5:
+		defaultFactorValue = 5
+		featureFactorValue = 15
+	case 6:
+		defaultFactorValue = 4
+		featureFactorValue = 14
+	}
+	/** 先赋默认值 **/
+	for i := 0; i < 10; i++ {
+		factorValues[i] = defaultFactorValue
+	}
+	/** 感兴趣的模块重新赋值 **/
+	for _, value := range sections {
+		for i := range factorValues { // 找到感兴趣的id
+			if (utils.MustInt(value) -1) == i {
+				factorValues[i] = featureFactorValue // 数组下标从0开始
+			}
+		}
+	}
 	return &UserFactor{
-		ShareFactor : 10,
-		BlogFactor  :10,
-		WorkFactor  :10,
-		QAAFactor    :10,
-		FrameFactor  :10,
-		NewsFactor   :10,
-		LangFactor   :10,
-		DBFactor     :10,
-		OutBagFactor :10,
-		MatchFactor  :10,
+		ShareFactor:  factorValues[0],
+		BlogFactor:   factorValues[1],
+		WorkFactor:   factorValues[2],
+		QAAFactor:    factorValues[3],
+		FrameFactor:  factorValues[4],
+		NewsFactor:   factorValues[5],
+		LangFactor:   factorValues[6],
+		DBFactor:     factorValues[7],
+		OutBagFactor: factorValues[8],
+		MatchFactor:  factorValues[9],
 	}
 }
 
 type userFactorValue struct {
 	Factors []string
-	Values []int
+	Values  []int
 }
 
 func (s *userFactorValue) Len() int {
@@ -73,25 +108,25 @@ func (s *userFactorValue) Swap(i, j int) {
 
 // Less is part of sort.Interface. It is implemented by calling the "by" closure in the sorter.
 func (s *userFactorValue) Less(i, j int) bool {
-	return s.Values[i]< s.Values[j]
+	return s.Values[i] < s.Values[j]
 }
 
 // 0获取五项最高的因子(特征因子),1获取五项最低的因子(无关因子)
 func (uf UserFactor) GetTopFactorByType(factorType int) map[string]int {
 	f := userFactorValue{}
-	factors := []string{"share_factor","blog_factor","work_factor","q_a_a_factor","frame_factor","news_factor","lang_factor","d_b_factor","out_bag_factor","match_factor"}
-	values := []int{uf.ShareFactor,uf.BlogFactor,uf.WorkFactor,uf.QAAFactor,uf.FrameFactor,uf.NewsFactor,uf.LangFactor,uf.DBFactor,uf.OutBagFactor,uf.MatchFactor}
+	factors := []string{"share_factor", "blog_factor", "work_factor", "q_a_a_factor", "frame_factor", "news_factor", "lang_factor", "d_b_factor", "out_bag_factor", "match_factor"}
+	values := []int{uf.ShareFactor, uf.BlogFactor, uf.WorkFactor, uf.QAAFactor, uf.FrameFactor, uf.NewsFactor, uf.LangFactor, uf.DBFactor, uf.OutBagFactor, uf.MatchFactor}
 	f.Factors = factors
 	f.Values = values
 	sort.Sort(&f)
 	factorMap := make(map[string]int)
 	switch factorType {
 	case 0:
-		for i,val := range f.Factors[5:] {
+		for i, val := range f.Factors[5:] {
 			factorMap[val] = f.Values[i]
 		}
 	case 1:
-		for i,val := range f.Factors[:5] {
+		for i, val := range f.Factors[:5] {
 			factorMap[val] = f.Values[i]
 		}
 	default:
@@ -104,7 +139,7 @@ func UpdateUserFactorByMap(factorMap map[string]int, userId int) {
 	o := orm.NewOrm()
 	var b bytes.Buffer
 	b.WriteString("update user_factor set ")
-	for factor,value := range factorMap {
+	for factor, value := range factorMap {
 		b.WriteString(factor)
 		b.WriteString(" = ")
 		b.WriteString(factor)

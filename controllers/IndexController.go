@@ -3,10 +3,10 @@ package controllers
 import (
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/models"
+	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
-	_ "github.com/sluu99/uuid"
+	"github.com/sluu99/uuid"
 	"strconv"
-	"github.com/astaxie/beego/logs"
 )
 
 type IndexController struct {
@@ -79,28 +79,27 @@ func (c *IndexController) RegisterPage() {
 func (c *IndexController) Register() {
 	flash := beego.NewFlash()
 	username, password, sections := c.Input().Get("username"), c.Input().Get("password"), c.Ctx.Request.Form["sections"]
-	logs.Debug("sections -------------->",sections)
 	if len(username) == 0 || len(password) == 0 {
 		flash.Error("用户名或密码不能为空")
 		flash.Store(&c.Controller)
 		c.Redirect("/register", 302)
-	//} else if flag, _ := models.FindUserByUserName(username); flag {
-	//	flash.Error("用户名已被注册")
-	//	flash.Store(&c.Controller)
-	//	c.Redirect("/register", 302)
-	//} else {
-	//	var token = uuid.Rand().Hex()
-	//	user := models.User{Username: username, Password: password, Avatar: "/static/imgs/avatar.png", Token: token}
-	//	models.SaveUser(&user)
-	//	/** 默认普通用户的角色 **/
-	//	commonUserId, _ := beego.AppConfig.Int("constant.common_user_id")
-	//	models.SaveUserRole(user.Id, commonUserId)
-	//	/** 默认的用户因子 **/
-	//	userFactor := models.UserFactor{}.New()
-	//	userFactor.User = &user
-	//	models.SaveUserFactor(userFactor)
-	//
-	//	c.SetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"), token, 30*24*60*60, "/", beego.AppConfig.String("cookie.domain"), false, true)
+	} else if flag, _ := models.FindUserByUserName(username); flag {
+		flash.Error("用户名已被注册")
+		flash.Store(&c.Controller)
+		c.Redirect("/register", 302)
+	} else {
+		var token = uuid.Rand().Hex()
+		user := models.User{Username: username, Password: password, Avatar: "/static/imgs/avatar.png", Token: token}
+		models.SaveUser(&user)
+		/** 默认普通用户的角色 **/
+		commonUserId, _ := beego.AppConfig.Int("constant.common_user_id")
+		models.SaveUserRole(user.Id, commonUserId)
+		/** 根据用户选的感兴趣的模块赋用户因子 **/
+		userFactor := models.UserFactor{}.New(sections)
+		userFactor.User = &user
+		models.SaveUserFactor(userFactor)
+
+		c.SetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"), token, 30*24*60*60, "/", beego.AppConfig.String("cookie.domain"), false, true)
 		c.Redirect("/", 302)
 	}
 	c.Redirect("/", 302)
