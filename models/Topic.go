@@ -67,11 +67,12 @@ func FavoritePageTopic(p int, size int, user *User) utils.Page {
 		"uf.share_factor * tf.share_factor) factor " +
 		" FROM user_factor uf,topic_factor tf ,topic " +
 		" where uf.user_id = ? and " +
-		" tf.topic_id = topic.id " +
+		" tf.topic_id = topic.id and " +
+		" topic.id not in(select topic_id from user_topic_list where user_id = ? and action_type = 2) "+ // 拉黑的文章不展示在"猜你喜欢"中
 		" order by factor desc,topic.id desc " +
 		" limit ? offset ?  "
 	var topics []Topic
-	_, err := o.Raw(s, user.Id, size, (p-1)*size).QueryRows(&topics)
+	_, err := o.Raw(s, user.Id,user.Id, size, (p-1)*size).QueryRows(&topics)
 	if err != nil {
 		logs.Debug("FavoritePageTopic: ", err)
 	}
@@ -129,6 +130,15 @@ func FindTopicByUser(user *User, limit int) []*Topic {
 	var topic Topic
 	var topics []*Topic
 	o.QueryTable(topic).RelatedSel().Filter("User", user).OrderBy("-LastReplyTime", "-InTime").Limit(limit).All(&topics)
+	return topics
+}
+
+func FindCollectTopicByUser(user *User, limit int )[]*Topic{
+	o := orm.NewOrm()
+	var topic Topic
+	var topics []*Topic
+	//  utl where utl.topic_id=? and utl.action_type = 1
+	o.QueryTable(topic).RelatedSel("UserTopicList").Filter("User", user).OrderBy("-LastReplyTime", "-InTime").Limit(limit).All(&topics)
 	return topics
 }
 
