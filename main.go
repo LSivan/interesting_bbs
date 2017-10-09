@@ -1,6 +1,7 @@
 package main
 
 import (
+	"git.oschina.net/gdou-geek-bbs/cron"
 	_ "git.oschina.net/gdou-geek-bbs/routers"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
@@ -23,6 +24,8 @@ func init(){
 		new(models.UserFactor),
 		new(models.TopicFactor),
 		new(models.UserTopicList),
+		new(models.TmpTopicFactor),
+		new(models.TmpUserFactor),
 	)
     orm.RunSyncdb("default", false, true)
 }
@@ -31,7 +34,7 @@ func main() {
     orm.Debug = true
     //ok, err := regexp.MatchString("/topic/edit/[0-9]+", "/topic/edit/123")
     //beego.Debug(ok, err)
-
+	go cron.SetupCron()
 	beego.Run()
 }
 

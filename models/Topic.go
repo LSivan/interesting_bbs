@@ -84,6 +84,10 @@ func FavoritePageTopic(p int, size int, user *User) utils.Page {
 		if b {
 			t.Section = &section
 		}
+		b, lastReplyUser := FindUserById(t.User.Id)
+		if b {
+			t.LastReplyUser = &lastReplyUser
+		}
 		(topics)[i] = t // 至关重要的一步,TODO 可以写个博客来研究下
 	}
 	c, _ := strconv.Atoi(strconv.FormatInt(count, 10))
