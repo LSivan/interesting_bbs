@@ -1,12 +1,12 @@
 package models
 
 import (
+	"bytes"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
-	"bytes"
 )
 
 //分享 博客 招聘 问答 框架 新闻 语言 数据库 外包 比赛
@@ -42,7 +42,7 @@ func UpdateTopicFactorByMap(factorMap map[string]int, topicId int) {
 	o := orm.NewOrm()
 	var b bytes.Buffer
 	b.WriteString("update topic_factor set ")
-	for factor,value := range factorMap {
+	for factor, value := range factorMap {
 		b.WriteString(factor)
 		b.WriteString(" = ")
 		b.WriteString(factor)
@@ -122,7 +122,7 @@ func (TopicFactor) New(factorType int) *TopicFactor {
 
 type topicFactorValue struct {
 	Factors []string
-	Values []int
+	Values  []int
 }
 
 func (s *topicFactorValue) Len() int {
@@ -137,25 +137,25 @@ func (s *topicFactorValue) Swap(i, j int) {
 
 // Less is part of sort.Interface. It is implemented by calling the "by" closure in the sorter.
 func (s *topicFactorValue) Less(i, j int) bool {
-	return s.Values[i]< s.Values[j]
+	return s.Values[i] < s.Values[j]
 }
 
 // 0获取五项最高的因子(特征因子),1获取五项最低的因子(无关因子)
 func (uf TopicFactor) GetTopFactorByType(factorType int) map[string]int {
 	f := topicFactorValue{}
-	factors := []string{"share_factor","blog_factor","work_factor","q_a_a_factor","frame_factor","news_factor","lang_factor","d_b_factor","out_bag_factor","match_factor"}
-	values := []int{uf.ShareFactor,uf.BlogFactor,uf.WorkFactor,uf.QAAFactor,uf.FrameFactor,uf.NewsFactor,uf.LangFactor,uf.DBFactor,uf.OutBagFactor,uf.MatchFactor}
+	factors := []string{"share_factor", "blog_factor", "work_factor", "q_a_a_factor", "frame_factor", "news_factor", "lang_factor", "d_b_factor", "out_bag_factor", "match_factor"}
+	values := []int{uf.ShareFactor, uf.BlogFactor, uf.WorkFactor, uf.QAAFactor, uf.FrameFactor, uf.NewsFactor, uf.LangFactor, uf.DBFactor, uf.OutBagFactor, uf.MatchFactor}
 	f.Factors = factors
 	f.Values = values
 	sort.Sort(&f)
 	factorMap := make(map[string]int)
 	switch factorType {
 	case 0:
-		for i,val := range f.Factors[5:10] {
+		for i, val := range f.Factors[5:10] {
 			factorMap[val] = f.Values[i+5]
 		}
 	case 1:
-		for i,val := range f.Factors[:5] {
+		for i, val := range f.Factors[:5] {
 			factorMap[val] = f.Values[i]
 		}
 	default:

@@ -1,10 +1,10 @@
 package models
 
 import (
-	"github.com/astaxie/beego/orm"
-	"strconv"
 	"bytes"
 	"github.com/astaxie/beego/logs"
+	"github.com/astaxie/beego/orm"
+	"strconv"
 )
 
 //分享 博客 招聘 问答 框架 新闻 语言 数据库 外包 比赛
@@ -45,11 +45,11 @@ func FindTopicFactorChangeSum() []TmpTopicFactor {
 	return factors
 }
 
-func SaveTmpTopicFactorByMap(factorValue map[string]int,topicFactorId int) int64 {
+func SaveTmpTopicFactorByMap(factorValue map[string]int, topicFactorId int) int64 {
 	o := orm.NewOrm()
 	var b bytes.Buffer
 	b.WriteString("insert into tmp_topic_factor SET id = null")
-	for factor,value := range factorValue {
+	for factor, value := range factorValue {
 		b.WriteString(", ")
 		b.WriteString(factor)
 		b.WriteString(" = ")

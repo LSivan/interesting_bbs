@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func NoHtml(str string) string {
@@ -10,7 +10,7 @@ func NoHtml(str string) string {
 }
 
 func MustInt(str string) int {
-	if v,err := strconv.Atoi(str);err == nil {
+	if v, err := strconv.Atoi(str); err == nil {
 		return v
 	}
 	return 0

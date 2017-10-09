@@ -103,7 +103,7 @@ func IncrView(topic *Topic) {
 func IncrReplyCount(topic *Topic) {
 	o := orm.NewOrm()
 	topic.ReplyCount = topic.ReplyCount + 1
-	o.Update(topic, "ReplyCount", "LastReplyUser", "LastReplyTime")
+	o.Update(topic, "ReplyCount")
 }
 
 func ReduceReplyCount(topic *Topic) {

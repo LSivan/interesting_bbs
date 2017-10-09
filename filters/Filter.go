@@ -54,7 +54,6 @@ var withLoginCheck = func(fn func(), ctx *context.Context) {
 	}
 }
 
-
 // TODO 一些不变的数据使用redis，比如话题等
 // TODO 查看他人资料时还可以看到它的收藏
 // TODO 更多话题/回复/收藏
@@ -91,13 +90,12 @@ var FilterUser = func(ctx *context.Context) {
 	}
 }
 
-
 func ChangeFactor(changeValue int, ctx *context.Context) {
 	_, user := IsLogin(ctx)
 	id := ctx.Input.Param(":id")
 	/******** 得到用户以及话题的特征因子和无关因子 *********/
-	userFactor,userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
-	topicFactor,topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
+	userFactor, userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
+	topicFactor, topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
 	/*
 		用户中与ThingFeatureFactor相同的因子，全部加上因子的变化度；
 		用户中与ThingUnusedFactor相同的因子，全部减去因子的变化度。
@@ -111,7 +109,7 @@ func ChangeFactor(changeValue int, ctx *context.Context) {
 	for factor := range userUnusedFactorMap {
 		topicFactorChangeMap[factor] = -1 * changeValue
 	}
-	models.SaveTmpTopicFactorByMap(topicFactorChangeMap,topicFactor.Id)
+	models.SaveTmpTopicFactorByMap(topicFactorChangeMap, topicFactor.Id)
 	userFactorChangeMap := make(map[string]int)
 	for factor := range topicFeatureFactorMap {
 		userFactorChangeMap[factor] = changeValue
@@ -119,12 +117,12 @@ func ChangeFactor(changeValue int, ctx *context.Context) {
 	for factor := range topicUnusedFactorMap {
 		userFactorChangeMap[factor] = -1 * changeValue
 	}
-	models.SaveTmpUserFactorByMap(userFactorChangeMap,userFactor.Id)
+	models.SaveTmpUserFactorByMap(userFactorChangeMap, userFactor.Id)
 }
 
-var getUserFactor = func(user models.User) (models.UserFactor,map[string]int, map[string]int) {
-	return models.FindFactorByUser(&user),models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
+var getUserFactor = func(user models.User) (models.UserFactor, map[string]int, map[string]int) {
+	return models.FindFactorByUser(&user), models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
 }
-var getTopicFactor = func(topic models.Topic) (models.TopicFactor,map[string]int, map[string]int) {
-	return models.FindFactorByTopic(&topic),models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
+var getTopicFactor = func(topic models.Topic) (models.TopicFactor, map[string]int, map[string]int) {
+	return models.FindFactorByTopic(&topic), models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
 }

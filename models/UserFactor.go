@@ -2,10 +2,10 @@ package models
 
 import (
 	"bytes"
+	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego/orm"
 	"sort"
 	"strconv"
-	"git.oschina.net/gdou-geek-bbs/utils"
 )
 
 //分享 博客 招聘 问答 框架 新闻 语言 数据库 外包 比赛
@@ -72,7 +72,7 @@ func (UserFactor) New(sections []string) *UserFactor {
 	/** 感兴趣的模块重新赋值 **/
 	for _, value := range sections {
 		for i := range factorValues { // 找到感兴趣的id
-			if (utils.MustInt(value) -1) == i {
+			if (utils.MustInt(value) - 1) == i {
 				factorValues[i] = featureFactorValue // 数组下标从0开始
 			}
 		}
