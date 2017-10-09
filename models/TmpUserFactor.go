@@ -64,3 +64,10 @@ func SaveTmpUserFactorByMap(factorValue map[string]int, userFactorId int) int64 
 	}
 	return 0
 }
+// 清表
+func ClearTmpUserFactor(){
+	o := orm.NewOrm()
+	var b bytes.Buffer
+	b.WriteString("delete from tmp_user_factor where id > 0")
+	o.Raw(b.String()).Exec()
+}

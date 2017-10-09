@@ -24,13 +24,19 @@ type TopicFactor struct {
 	MatchFactor  int    `orm:"default(10)"`
 	Topic        *Topic `orm:"rel(fk)"`
 }
-
+func FindTopicFactorById(id int) TopicFactor {
+	o := orm.NewOrm()
+	var factor TopicFactor
+	o.QueryTable(factor).RelatedSel().Filter("Id", id).One(&factor)
+	return factor
+}
 func FindFactorByTopic(topic *Topic) TopicFactor {
 	o := orm.NewOrm()
 	var factor TopicFactor
 	o.QueryTable(factor).RelatedSel().Filter("Topic", topic).One(&factor)
 	return factor
 }
+
 
 func SaveTopicFactor(topicFactor *TopicFactor) int64 {
 	o := orm.NewOrm()
@@ -58,8 +64,22 @@ func UpdateTopicFactorByMap(factorMap map[string]int, topicId int) {
 	o.Raw(b.String()).Exec()
 }
 
-func UpdateTopicFactor(topicFactor *TopicFactor) {
+/*
+	reply.Up = reply.Up + 1
+	o.Update(reply, "Up")
+*/
+func UpdateTopicFactorByTmpFactor(tmpTopicFactor *TmpTopicFactor,topicFactor *TopicFactor) {
 	o := orm.NewOrm()
+	topicFactor.ShareFactor = topicFactor.ShareFactor + tmpTopicFactor.ShareFactor
+	topicFactor.BlogFactor = topicFactor.BlogFactor + tmpTopicFactor.BlogFactor
+	topicFactor.WorkFactor = topicFactor.WorkFactor + tmpTopicFactor.WorkFactor
+	topicFactor.QAAFactor = topicFactor.QAAFactor + tmpTopicFactor.QAAFactor
+	topicFactor.FrameFactor = topicFactor.FrameFactor + tmpTopicFactor.FrameFactor
+	topicFactor.NewsFactor = topicFactor.NewsFactor + tmpTopicFactor.NewsFactor
+	topicFactor.LangFactor = topicFactor.LangFactor + tmpTopicFactor.LangFactor
+	topicFactor.DBFactor = topicFactor.DBFactor + tmpTopicFactor.DBFactor
+	topicFactor.OutBagFactor = topicFactor.OutBagFactor + tmpTopicFactor.OutBagFactor
+	topicFactor.MatchFactor = topicFactor.MatchFactor + tmpTopicFactor.MatchFactor
 	o.Update(topicFactor)
 }
 

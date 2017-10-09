@@ -24,6 +24,12 @@ type UserFactor struct {
 	User         *User `orm:"rel(fk)"`
 }
 
+func FindUserFactorById(id int) UserFactor {
+	o := orm.NewOrm()
+	var factor UserFactor
+	o.QueryTable(factor).RelatedSel().Filter("Id", id).One(&factor)
+	return factor
+}
 func FindFactorByUser(user *User) UserFactor {
 	o := orm.NewOrm()
 	var factor UserFactor
@@ -37,11 +43,21 @@ func SaveUserFactor(userFactor *UserFactor) int64 {
 	return id
 }
 
-func UpdateUserFactor(userFactor *UserFactor) {
+
+func UpdateUserFactorByTmpFactor(tmpUserFactor *TmpUserFactor, userFactor *UserFactor) {
 	o := orm.NewOrm()
+	userFactor.ShareFactor = userFactor.ShareFactor + tmpUserFactor.ShareFactor
+	userFactor.BlogFactor = userFactor.BlogFactor + tmpUserFactor.BlogFactor
+	userFactor.WorkFactor = userFactor.WorkFactor + tmpUserFactor.WorkFactor
+	userFactor.QAAFactor = userFactor.QAAFactor + tmpUserFactor.QAAFactor
+	userFactor.FrameFactor = userFactor.FrameFactor + tmpUserFactor.FrameFactor
+	userFactor.NewsFactor = userFactor.NewsFactor + tmpUserFactor.NewsFactor
+	userFactor.LangFactor = userFactor.LangFactor + tmpUserFactor.LangFactor
+	userFactor.DBFactor = userFactor.DBFactor + tmpUserFactor.DBFactor
+	userFactor.OutBagFactor = userFactor.OutBagFactor + tmpUserFactor.OutBagFactor
+	userFactor.MatchFactor = userFactor.MatchFactor + tmpUserFactor.MatchFactor
 	o.Update(userFactor)
 }
-
 func (UserFactor) New(sections []string) *UserFactor {
 	factorValues := [10]int{}
 	defaultFactorValue, featureFactorValue := 10, 10

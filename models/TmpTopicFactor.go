@@ -64,3 +64,10 @@ func SaveTmpTopicFactorByMap(factorValue map[string]int, topicFactorId int) int6
 	}
 	return 0
 }
+// 清表
+func ClearTmpTopicFactor(){
+	o := orm.NewOrm()
+	var b bytes.Buffer
+	b.WriteString("delete from tmp_topic_factor where id > 0")
+	o.Raw(b.String()).Exec()
+}
