@@ -35,5 +35,7 @@ func main() {
 	//ok, err := regexp.MatchString("/topic/edit/[0-9]+", "/topic/edit/123")
 	//beego.Debug(ok, err)
 	go cron.SetupCron()
+	//_,user := models.FindUserById(2)
+	//models.FindCollectTopicByUser(&user,7)
 	beego.Run()
 }

@@ -32,3 +32,6 @@
 
 # bin
 gdou-geek-bbs
+
+# upload
+/static/upload/avatar/*

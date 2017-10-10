@@ -54,6 +54,7 @@
       {{template "components/welcome.tpl" .}}
     {{end}}
     {{template "components/otherbbs.tpl" .}}
+    {{template "components/bbs_announce.tpl" .}}
   </div>
 </div>
 <script type="text/javascript" src="/static/js/bootstrap-paginator.min.js"></script>

@@ -68,11 +68,11 @@ func FavoritePageTopic(p int, size int, user *User) utils.Page {
 		" FROM user_factor uf,topic_factor tf ,topic " +
 		" where uf.user_id = ? and " +
 		" tf.topic_id = topic.id and " +
-		" topic.id not in(select topic_id from user_topic_list where user_id = ? and action_type = 2) "+ // 拉黑的文章不展示在"猜你喜欢"中
+		" topic.id not in(select topic_id from user_topic_list where user_id = ? and action_type = 2) " + // 拉黑的文章不展示在"猜你喜欢"中
 		" order by factor desc,topic.id desc " +
 		" limit ? offset ?  "
 	var topics []Topic
-	_, err := o.Raw(s, user.Id,user.Id, size, (p-1)*size).QueryRows(&topics)
+	_, err := o.Raw(s, user.Id, user.Id, size, (p-1)*size).QueryRows(&topics)
 	if err != nil {
 		logs.Debug("FavoritePageTopic: ", err)
 	}
@@ -133,12 +133,35 @@ func FindTopicByUser(user *User, limit int) []*Topic {
 	return topics
 }
 
-func FindCollectTopicByUser(user *User, limit int )[]*Topic{
+func FindCollectTopicByUser(user *User, limit int,p int) []*Topic {
 	o := orm.NewOrm()
-	var topic Topic
 	var topics []*Topic
 	//  utl where utl.topic_id=? and utl.action_type = 1
-	o.QueryTable(topic).RelatedSel("UserTopicList").Filter("User", user).OrderBy("-LastReplyTime", "-InTime").Limit(limit).All(&topics)
+	sql := "select " +
+		"topic.`id`, topic.`title`, topic.`content`, topic.`in_time`, topic.`user_id`, " +
+		"topic.`section_id`, topic.`view`, topic.`reply_count`, topic.`last_reply_user_id`, topic.`last_reply_time`, topic.`collect_count` " +
+		"from topic inner join user_topic_list " +
+		"where topic.id = user_topic_list.topic_id and " +
+		"user_topic_list.action_type = 1 and " +
+		"user_topic_list.user_id = ? "+
+		"order by topic.in_time desc "+
+		"limit ? offset ?"
+	o.Raw(sql,user.Id,limit,limit*(p-1)).QueryRows(&topics)
+	for i, t := range topics {
+		b, user := FindUserById(t.User.Id)
+		if b {
+			t.User = &user
+		}
+		b, section := FindSectionById(t.Section.Id)
+		if b {
+			t.Section = &section
+		}
+		b, lastReplyUser := FindUserById(t.User.Id)
+		if b {
+			t.LastReplyUser = &lastReplyUser
+		}
+		(topics)[i] = t // 至关重要的一步,TODO 可以写个博客来研究下
+	}
 	return topics
 }
 

@@ -47,9 +47,15 @@
         <div class="divide mar-top-5"></div>
         {{end}}
       </div>
+      {{ if ge (.Topics|len) 7 }}
       <div class="panel-footer">
         <a href="/user/{{.CurrentUserInfo.Username}}/topics">{{.CurrentUserInfo.Username}}更多话题&gt;&gt;</a>
       </div>
+      {{else if eq (.Topics|len) 0 }}
+        <div class="panel-footer">
+          <a href="javaScript:void(0);">暂无话题～(ˇˍˇ)～</a>
+        </div>
+      {{end}}
     </div>
     <div class="panel panel-default">
       <div class="panel-heading">{{.CurrentUserInfo.Username}}回复的话题</div>
@@ -70,12 +76,20 @@
         {{end}}
         </tbody>
       </table>
+      {{ if ge (.Replies|len) 7 }}
       <div class="panel-footer">
         <a href="/user/{{.CurrentUserInfo.Username}}/replies">{{.CurrentUserInfo.Username}}更多回复&gt;&gt;</a>
       </div>
+      {{else if eq (.Replies|len) 0 }}
+          <div class="panel-body"></div>
+          <div class="panel-footer">
+            <a href="javaScript:void(0);">暂无回复～(ˇˍˇ)～</a>
+          </div>
+      {{ end}}
     </div>
     <div class="panel panel-default">
           <div class="panel-heading">{{.CurrentUserInfo.Username}}收藏的话题</div>
+          <div class="panel-body">
             {{range .Collects}}
             <div class="media">
                       <div class="media-body">
@@ -101,9 +115,16 @@
                     </div>
                     <div class="divide mar-top-5"></div>
             {{end}}
-          <div class="panel-footer">
-            <a href="/user/{{.CurrentUserInfo.Username}}/replies">{{.CurrentUserInfo.Username}}更多的收藏&gt;&gt;</a>
           </div>
+          {{ if ge (.Collects|len) 7 }}
+            <div class="panel-footer">
+              <a href="/user/{{.CurrentUserInfo.Username}}/replies">{{.CurrentUserInfo.Username}}更多的收藏&gt;&gt;</a>
+            </div>
+          {{else if eq (.Collects|len) 0 }}
+            <div class="panel-footer">
+              <a href="javaScript:void(0);">暂无收藏～(ˇˍˇ)～</a>
+            </div>
+          {{end}}
         </div>
     {{else}}
     <div class="panel panel-default">

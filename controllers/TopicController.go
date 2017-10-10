@@ -138,7 +138,6 @@ func (c *TopicController) CancelCollect() {
 	result := utils.Result{Code: 500, Description: "话题不存在"}
 	c.Data["json"] = &result
 	if id > 0 {
-
 		topic := models.FindTopicById(id)
 		_, user := filters.IsLogin(c.Controller.Ctx)
 		b, userTopicList := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 1)

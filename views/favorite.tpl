@@ -1,14 +1,6 @@
 <div class="row">
   <div class="col-md-9">
     <div class="panel panel-default">
-      <div class="panel-heading">
-        <ul class="nav nav-pills">
-          <li id="tab_0"><a href="/?tab=all">全部</a></li>
-          {{range .Sections}}
-          <li id="tab_{{.Id}}"><a href="/?s={{.Id}}">{{.Name}}</a></li>
-          {{end}}
-        </ul>
-      </div>
       <div class="panel-body paginate-bot">
         {{range .Page.List}}
         <div class="media">
