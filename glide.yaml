@@ -1,0 +1,17 @@
+package: git.oschina.net/gdou-geek-bbs
+import:
+- package: github.com/astaxie/beego
+  version: v1.9.0
+  subpackages:
+  - context
+  - logs
+  - orm
+- package: github.com/go-sql-driver/mysql
+  version: v1.3
+- package: github.com/robfig/cron
+  version: v1
+- package: github.com/russross/blackfriday
+  version: v2.0.0
+- package: github.com/sluu99/uuid
+- package: github.com/xeonx/timeago
+  version: v1.0.0-rc2
