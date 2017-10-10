@@ -28,9 +28,15 @@
                         <span><a href="javascript:if(confirm('确定删除吗?')) location.href='/topic/delete/{{.Topic.Id}}'">删除</a></span>
                       {{end}}
                   {{end}}
-                  <span>•</span>
-                  <span><a href="/topic/black/{{.Topic.Id}}" class="collect popover-hide" title="拉黑之后不会再推荐给你哦" data-container="body"
-                            data-toggle="popover" data-placement="top">拉黑</a></span>
+                  {{ if isblack .UserInfo .Topic }}
+                      <span>•</span>
+                      <span><a href="javascript:cancelBlack({{.Topic.Id}})" class="collect popover-hide" title="取消拉黑才能在猜你喜欢中推荐给你哦" data-container="body"
+                            data-toggle="popover" data-placement="top">取消拉黑</a></span>
+                  {{else}}
+                       <span>•</span>
+                       <span><a href="javascript:black({{.Topic.Id}})" class="collect popover-hide" title="拉黑之后不会再推荐给你哦" data-container="body"
+                              data-toggle="popover" data-placement="top">拉黑</a></span>
+                  {{end}}
                   {{ if iscollect .UserInfo .Topic }}
                      <span>•</span>
                      <span><a href="javascript:cancelCollect({{.Topic.Id}})" class="collect popover-hide" title="将文章放出来" data-container="body"
@@ -140,8 +146,6 @@
         dataType: "json",
         success: function (data) {
           if(data.Code == 200) {
-            /*$(".collect").text('取消收藏');
-            $(".collect").attr("href","javascript:cancelCollect("+id+")");*/
             window.location.href="/topic/"+id
           } else {
             alert(data.Description)
@@ -167,8 +171,48 @@
           dataType: "json",
           success: function (data) {
             if(data.Code == 200) {
-              /*$(".collect").text('收藏');
-              $(".collect").attr("href","javascript:collect("+id+")");*/
+              window.location.href="/topic/"+id
+            } else {
+              alert(data.Description)
+            }
+          }
+        });
+      } else {
+        alert("请先登录");
+      }
+    }
+    function black(id) {
+        var isLogin = {{.IsLogin}};
+        if(isLogin) {
+          $.ajax({
+            url: "/topic/black/"+id,
+            async: true,
+            cache: false,
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+              if(data.Code == 200) {
+                window.location.href="/topic/"+id
+              } else {
+                alert(data.Description)
+              }
+            }
+          });
+        } else {
+          alert("请先登录");
+        }
+      }
+    function cancelBlack(id) {
+      var isLogin = {{.IsLogin}};
+      if(isLogin) {
+        $.ajax({
+          url: "/topic/cancel_black/"+id,
+          async: true,
+          cache: false,
+          type: "post",
+          dataType: "json",
+          success: function (data) {
+            if(data.Code == 200) {
               window.location.href="/topic/"+id
             } else {
               alert(data.Description)

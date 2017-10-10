@@ -31,6 +31,10 @@ func init() {
 	beego.InsertFilter("/topic/collect/:id([0-9]+)", beego.BeforeRouter, filters.CollectChangeFactor)
 	beego.Router("/topic/collect/:id([0-9]+)", &controllers.TopicController{}, "POST:Collect")
 	beego.Router("/topic/cancel_collect/:id([0-9]+)", &controllers.TopicController{}, "POST:CancelCollect")
+	beego.InsertFilter("/topic/black/:id([0-9]+)", beego.BeforeRouter, filters.BlackChangeFactor)
+	beego.Router("/topic/black/:id([0-9]+)", &controllers.TopicController{}, "POST:Black")
+	beego.InsertFilter("/topic/black/:id([0-9]+)", beego.BeforeRouter, filters.CancelBlackChangeFactor)
+	beego.Router("/topic/cancel_black/:id([0-9]+)", &controllers.TopicController{}, "POST:CancelBlack")
 
 	beego.InsertFilter("/reply/save", beego.BeforeRouter, filters.FilterUser)
 	beego.Router("/reply/save", &controllers.ReplyController{}, "POST:Save")

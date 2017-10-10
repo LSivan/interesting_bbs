@@ -70,6 +70,12 @@ var BlackChangeFactor = func(ctx *context.Context) { // 用户拉黑时执行
 			ChangeFactor(-2, ctx)
 		}, ctx)
 }
+var CancelBlackChangeFactor = func(ctx *context.Context) { // 用户取消拉黑时执行
+	withLoginCheck(
+		func() {
+			ChangeFactor(2, ctx)
+		}, ctx)
+}
 var CollectChangeFactor = func(ctx *context.Context) { // 用户收藏时执行
 	withLoginCheck(
 		func() {

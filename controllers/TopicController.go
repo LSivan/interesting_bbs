@@ -150,3 +150,40 @@ func (c *TopicController) CancelCollect() {
 	}
 	c.ServeJSON()
 }
+
+func (c *TopicController) Black() {
+	id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	result := utils.Result{Code: 500, Description: "话题不存在"}
+	c.Data["json"] = &result
+	if id > 0 {
+
+		topic := models.FindTopicById(id)
+		_, user := filters.IsLogin(c.Controller.Ctx)
+		b, _ := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 2)
+		if !b { // 确保不存在
+			models.SaveUserTopic(&models.UserTopicList{Topic: &topic, User: &user, ActionType: 2}) // 1为收藏
+			models.IncrCollectCount(&topic)
+			result := utils.Result{Code: 200, Description: "成功"}
+			c.Data["json"] = &result
+		}
+	}
+	c.ServeJSON()
+}
+
+func (c *TopicController) CancelBlack() {
+	id, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	result := utils.Result{Code: 500, Description: "话题不存在"}
+	c.Data["json"] = &result
+	if id > 0 {
+		topic := models.FindTopicById(id)
+		_, user := filters.IsLogin(c.Controller.Ctx)
+		b, userTopicList := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 2)
+		if b { // 确保存在
+			models.DeleteUserTopic(userTopicList)
+			models.ReduceCollectCount(&topic)
+			result := utils.Result{Code: 200, Description: "成功"}
+			c.Data["json"] = &result
+		}
+	}
+	c.ServeJSON()
+}

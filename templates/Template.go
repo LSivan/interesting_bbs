@@ -22,7 +22,11 @@ func HasPermission(userId int, name string) bool {
 }
 
 func IsCollect(user models.User, topic models.Topic) bool {
-	b, _ := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 1)
+	b, _ := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 1)// 1为收藏
+	return b
+}
+func IsBlack(user models.User, topic models.Topic) bool {
+	b, _ := models.FindTopicByUserAndTopicAndActionType(&user, &topic, 2)// 2为拉黑
 	return b
 }
 func init() {
@@ -30,4 +34,5 @@ func init() {
 	beego.AddFuncMap("markdown", Markdown)
 	beego.AddFuncMap("haspermission", HasPermission)
 	beego.AddFuncMap("iscollect", IsCollect)
+	beego.AddFuncMap("isblack", IsBlack)
 }

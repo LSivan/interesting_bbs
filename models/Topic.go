@@ -133,20 +133,19 @@ func FindTopicByUser(user *User, limit int) []*Topic {
 	return topics
 }
 
-func FindCollectTopicByUser(user *User, limit int,p int) []*Topic {
+func findTopicByUserAndActionType(user *User,actionType int, limit int,p int) []*Topic {
 	o := orm.NewOrm()
 	var topics []*Topic
-	//  utl where utl.topic_id=? and utl.action_type = 1
 	sql := "select " +
 		"topic.`id`, topic.`title`, topic.`content`, topic.`in_time`, topic.`user_id`, " +
 		"topic.`section_id`, topic.`view`, topic.`reply_count`, topic.`last_reply_user_id`, topic.`last_reply_time`, topic.`collect_count` " +
 		"from topic inner join user_topic_list " +
 		"where topic.id = user_topic_list.topic_id and " +
-		"user_topic_list.action_type = 1 and " +
+		"user_topic_list.action_type = ? and " +
 		"user_topic_list.user_id = ? "+
 		"order by topic.in_time desc "+
 		"limit ? offset ?"
-	o.Raw(sql,user.Id,limit,limit*(p-1)).QueryRows(&topics)
+	o.Raw(sql,actionType,user.Id,limit,limit*(p-1)).QueryRows(&topics)
 	for i, t := range topics {
 		b, user := FindUserById(t.User.Id)
 		if b {
@@ -160,9 +159,16 @@ func FindCollectTopicByUser(user *User, limit int,p int) []*Topic {
 		if b {
 			t.LastReplyUser = &lastReplyUser
 		}
-		(topics)[i] = t // 至关重要的一步,TODO 可以写个博客来研究下
+		(topics)[i] = t
 	}
 	return topics
+}
+
+func FindCollectTopicByUser(user *User, limit int,p int) []*Topic {
+	return findTopicByUserAndActionType(user,1,limit,p)
+}
+func FindBlackTopicByUser(user *User, limit int,p int) []*Topic {
+	return findTopicByUserAndActionType(user,2,limit,p)
 }
 
 func UpdateTopic(topic *Topic) {

@@ -26,6 +26,7 @@ func (c *UserController) Detail() {
 		c.Data["Topics"] = models.FindTopicByUser(&user, 7)
 		c.Data["Replies"] = models.FindReplyByUser(&user, 7)
 		c.Data["Collects"] = models.FindCollectTopicByUser(&user, 7,1)
+		c.Data["Blacks"] = models.FindBlackTopicByUser(&user, 7,1)
 	}
 	c.Layout = "layout/layout.tpl"
 	c.TplName = "user/detail.tpl"
