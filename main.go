@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	orm.RegisterDataBase("default", "mysql", beego.AppConfig.String("jdbc.username")+":"+beego.AppConfig.String("jdbc.password")+"@/pybbs-go?charset=utf8&parseTime=true&charset=utf8&loc=Asia%2FShanghai", 30)
+	orm.RegisterDataBase("default", "mysql", beego.AppConfig.String("jdbc.username")+":"+beego.AppConfig.String("jdbc.password")+"@/bbs?charset=utf8&parseTime=true&charset=utf8&loc=Asia%2FShanghai", 30)
 	orm.RegisterModel(
 		new(models.User),
 		new(models.Topic),
