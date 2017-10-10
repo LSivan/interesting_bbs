@@ -1,6 +1,7 @@
 <div class="row">
   <div class="col-md-9">
     <div class="panel panel-default">
+    {{ if .IsLogin }}
       <div class="panel-body paginate-bot">
         {{range .Page.List}}
         <div class="media">
@@ -34,6 +35,11 @@
         {{end}}
         <ul id="page"></ul>
       </div>
+      {{else}}
+        <div class="panel-body paginate-bot">
+            <p>登录后才能推荐给你喔</p>
+        </div>
+      {{end}}
     </div>
   </div>
   <div class="col-md-3 hidden-sm hidden-xs">
@@ -44,6 +50,7 @@
       {{template "components/welcome.tpl" .}}
     {{end}}
     {{template "components/otherbbs.tpl" .}}
+    {{template "components/bbs_announce.tpl" .}}
   </div>
 </div>
 <script type="text/javascript" src="/static/js/bootstrap-paginator.min.js"></script>
