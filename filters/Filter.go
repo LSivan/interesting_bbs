@@ -54,8 +54,6 @@ var withLoginCheck = func(fn func(), ctx *context.Context) {
 	}
 }
 
-// TODO 一些不变的数据使用redis，比如话题等
-// TODO 更多话题/回复/收藏
 var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
 	withLoginCheck(
 		func() {

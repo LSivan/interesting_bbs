@@ -6,17 +6,17 @@
         <p>海大人是用Golang语言编写的社区（论坛）系统.</p>
         <p>感谢 <a href="http://beego.me" target="_blank">beego</a> - Golang Web开发框架</p>
         <p>
-          欢迎提 <a href="https://github.com/tomoya92/pybbs-go/issues" target="_blank">issues</a>
+          欢迎提 <a href="https://github.com/tomoya92/bbs-go/issues" target="_blank">issues</a>
         </p>
         <p>开源地址:
         </p>
         <ul>
           <li>
-            Github: <a href="http://github.com/liygheart/pybbs-go"
-                       target="_blank">http://github.com/tomoya92/pybbs-go</a>
+            Github: <a href="http://github.com/liygheart/bbs-go"
+                       target="_blank">http://github.com/tomoya92/bbs-go</a>
           </li>
           <li>
-            Gitosc: <a href="http://git.oschina.net/20110516/pybbs-go" target="_blank">http://git.oschina.net/20110516/pybbs-go</a>
+            Gitosc: <a href="http://git.oschina.net/20110516/bbs-go" target="_blank">http://git.oschina.net/20110516/bbs-go</a>
           </li>
         </ul>
         <p>依赖:
