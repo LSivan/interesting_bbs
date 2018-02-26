@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
+	"git.oschina.net/gdou-geek-bbs/engine"
 )
 
 func init() {
@@ -42,5 +43,6 @@ func main() {
 	go cron.SetupCron()
 	//_,user := models.FindUserById(2)
 	//models.FindCollectTopicByUser(&user,7)
+	go engine.Indexer.Index()
 	beego.Run()
 }

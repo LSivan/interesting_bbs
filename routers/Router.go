@@ -9,6 +9,7 @@ import (
 func init() {
 	beego.InsertFilter("/*", beego.BeforeStatic, filters.FilterNoCache)
 
+	beego.Router("/search",&controllers.SearchController{},"GET:Search")
 	beego.Router("/", &controllers.IndexController{}, "GET:Index")
 	beego.Router("/login", &controllers.IndexController{}, "GET:LoginPage")
 	beego.Router("/login", &controllers.IndexController{}, "POST:Login")
