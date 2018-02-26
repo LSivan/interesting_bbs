@@ -124,7 +124,13 @@ func ReduceCollectCount(topic *Topic) {
 	topic.CollectCount = topic.CollectCount - 1
 	o.Update(topic, "CollectCount")
 }
-
+func FindTopicFrom(offset int, limit int) []*Topic {
+	o := orm.NewOrm()
+	var topic Topic
+	var topics []*Topic
+	o.QueryTable(topic).RelatedSel().Offset(offset).Limit(limit).All(&topics)
+	return topics
+}
 func FindTopicByUser(user *User, limit int) []*Topic {
 	o := orm.NewOrm()
 	var topic Topic
