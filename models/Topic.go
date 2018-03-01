@@ -71,26 +71,12 @@ func FavoritePageTopic(p int, size int, user *User) utils.Page {
 		" topic.id not in(select topic_id from user_topic_list where user_id = ? and action_type = 2) " + // 拉黑的文章不展示在"猜你喜欢"中
 		" order by factor desc,topic.id desc " +
 		" limit ? offset ?  "
-	var topics []Topic
+	var topics []*Topic
 	_, err := o.Raw(s, user.Id, user.Id, size, (p-1)*size).QueryRows(&topics)
 	if err != nil {
 		logs.Debug("FavoritePageTopic: ", err)
 	}
-	for i, t := range topics {
-		b, user := FindUserById(t.User.Id)
-		if b {
-			t.User = &user
-		}
-		b, section := FindSectionById(t.Section.Id)
-		if b {
-			t.Section = &section
-		}
-		b, lastReplyUser := FindUserById(t.User.Id)
-		if b {
-			t.LastReplyUser = &lastReplyUser
-		}
-		(topics)[i] = t // 至关重要的一步,TODO 可以写个博客来研究下
-	}
+	fillTopicFields(&topics)
 	c, _ := strconv.Atoi(strconv.FormatInt(count, 10))
 	return utils.PageUtil(c, p, size, &topics)
 }
@@ -131,6 +117,23 @@ func FindTopicFrom(offset int, limit int) []*Topic {
 	o.QueryTable(topic).RelatedSel().Offset(offset).Limit(limit).All(&topics)
 	return topics
 }
+func CountTopicFromID(id int) int {
+	o := orm.NewOrm()
+	var topic Topic
+	count, err := o.QueryTable(topic).Filter("id__gt", id).Count()
+	if err == nil {
+		return int(count)
+	}
+	return 0
+}
+func FindTopicByIDS(IDS []int) []*Topic {
+	o := orm.NewOrm()
+	var topic Topic
+	var topics []*Topic
+	o.QueryTable(topic).RelatedSel().Filter("id__in", IDS).All(&topics)
+	fillTopicFields(&topics)
+	return topics
+}
 func FindTopicByUser(user *User, limit int) []*Topic {
 	o := orm.NewOrm()
 	var topic Topic
@@ -139,7 +142,7 @@ func FindTopicByUser(user *User, limit int) []*Topic {
 	return topics
 }
 
-func findTopicByUserAndActionType(user *User,actionType int, limit int,p int) []*Topic {
+func findTopicByUserAndActionType(user *User, actionType int, limit int, p int) []*Topic {
 	o := orm.NewOrm()
 	var topics []*Topic
 	sql := "select " +
@@ -148,11 +151,16 @@ func findTopicByUserAndActionType(user *User,actionType int, limit int,p int) []
 		"from topic inner join user_topic_list " +
 		"where topic.id = user_topic_list.topic_id and " +
 		"user_topic_list.action_type = ? and " +
-		"user_topic_list.user_id = ? "+
-		"order by topic.in_time desc "+
+		"user_topic_list.user_id = ? " +
+		"order by topic.in_time desc " +
 		"limit ? offset ?"
-	o.Raw(sql,actionType,user.Id,limit,limit*(p-1)).QueryRows(&topics)
-	for i, t := range topics {
+	o.Raw(sql, actionType, user.Id, limit, limit*(p-1)).QueryRows(&topics)
+	fillTopicFields(&topics)
+	return topics
+}
+
+var fillTopicFields = func(topics *[]*Topic) {
+	for i, t := range *topics {
 		b, user := FindUserById(t.User.Id)
 		if b {
 			t.User = &user
@@ -165,16 +173,15 @@ func findTopicByUserAndActionType(user *User,actionType int, limit int,p int) []
 		if b {
 			t.LastReplyUser = &lastReplyUser
 		}
-		(topics)[i] = t
+		(*topics)[i] = t // t只是循环的时候的一个变量，必须要赋值到topics上
 	}
-	return topics
 }
 
-func FindCollectTopicByUser(user *User, limit int,p int) []*Topic {
-	return findTopicByUserAndActionType(user,1,limit,p)
+func FindCollectTopicByUser(user *User, limit int, p int) []*Topic {
+	return findTopicByUserAndActionType(user, 1, limit, p)
 }
-func FindBlackTopicByUser(user *User, limit int,p int) []*Topic {
-	return findTopicByUserAndActionType(user,2,limit,p)
+func FindBlackTopicByUser(user *User, limit int, p int) []*Topic {
+	return findTopicByUserAndActionType(user, 2, limit, p)
 }
 
 func UpdateTopic(topic *Topic) {
