@@ -129,9 +129,8 @@ func CountTopicFromID(id int) int {
 }
 func FindTopicByIDS(IDS []int) []*Topic {
 	o := orm.NewOrm()
-	var topic Topic
 	var topics []*Topic
-	o.QueryTable(topic).RelatedSel().Filter("id__in", IDS).All(&topics)
+	o.QueryTable(Topic{}).RelatedSel().Filter("id__in", IDS).All(&topics)
 	fillTopicFields(&topics)
 	return topics
 }
@@ -162,10 +161,13 @@ func findTopicByUserAndActionType(user *User, actionType int, limit int, p int) 
 
 var fillTopicFields = func(topics *[]*Topic) {
 	if topics != nil && len(*topics) > 0 {
-		userIDS := make([]int, 1, len(*topics)*2)
-		sectionIDS := make([]int, 1, len(*topics))
+		userIDS := make([]int, 0, len(*topics)*2)
+		sectionIDS := make([]int, 0, len(*topics))
 		for _, t := range *topics {
-			userIDS = append(userIDS, t.User.Id, t.LastReplyUser.Id)
+			userIDS = append(userIDS, t.User.Id)
+			if t.LastReplyUser != nil {
+				userIDS = append(userIDS, t.LastReplyUser.Id)
+			}
 			sectionIDS = append(sectionIDS, t.Section.Id)
 		}
 		users := FindUserByIDS(userIDS)
@@ -179,8 +181,10 @@ var fillTopicFields = func(topics *[]*Topic) {
 					if t.User.Id == user.Id {
 						t.User = user
 					}
-					if t.LastReplyUser.Id == user.Id {
-						t.LastReplyUser = user
+					if t.LastReplyUser != nil {
+						if t.LastReplyUser.Id == user.Id {
+							t.LastReplyUser = user
+						}
 					}
 				}
 				for _, section := range sections {
