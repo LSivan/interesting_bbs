@@ -2,6 +2,7 @@ package main
 
 import (
 	"git.oschina.net/gdou-geek-bbs/cron"
+	"git.oschina.net/gdou-geek-bbs/engine"
 	"git.oschina.net/gdou-geek-bbs/models"
 	_ "git.oschina.net/gdou-geek-bbs/routers"
 	_ "git.oschina.net/gdou-geek-bbs/templates"
@@ -9,7 +10,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
-	"git.oschina.net/gdou-geek-bbs/engine"
 )
 
 func init() {
@@ -32,10 +32,7 @@ func init() {
 }
 
 func main() {
-	// TODO 一些不变的数据使用redis，比如话题等
 	// TODO 更多话题/回复/收藏
-	// TODO 接入较成熟的全文搜索
-	// TODO 导一份默认的sql
 	// TODO README.md
 	orm.Debug = true
 	//ok, err := regexp.MatchString("/topic/edit/[0-9]+", "/topic/edit/123")
