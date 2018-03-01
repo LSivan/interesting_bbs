@@ -1,25 +1,23 @@
 package engine
 
 import (
-	"fmt"
 	"git.oschina.net/gdou-geek-bbs/models"
+	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/analysis/analyzer/standard"
+	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/mapping"
 	"log"
-	"os"
 	"strconv"
 	"sync"
 	"time"
-	"github.com/blevesearch/bleve/analysis/lang/en"
 )
 
 type indexer struct {
 	NextDocId     int64 // 下一次更新时的DocId
 	indexPath     string
 	i             bleve.Index
-	extraDocCount int64 // 已建立好索引的存储之外的文档数量，超过1000就重新建立存储
 	indexMapping  mapping.IndexMapping
 	batchSize     int
 }
@@ -38,7 +36,6 @@ func init() {
 			NextDocId:     beego.AppConfig.DefaultInt64("engine.next.doc.id", 0),
 			indexPath:     beego.AppConfig.String("engine.index.path"),
 			indexMapping:  indexMapping,
-			extraDocCount: beego.AppConfig.DefaultInt64("engine.extra.doc.count", 0),
 			batchSize:     beego.AppConfig.DefaultInt("engine.batch.size", 100),
 		}
 	})
@@ -51,72 +48,47 @@ func init() {
 //
 // 负责索引的建立，更新
 func (self *indexer) Index() {
+
 	topicIndex, err := bleve.Open(self.indexPath)
 	var needRecord bool
 	var extraDocCount int64
 	var nextDocId int64
-	var flag bool
-	log.Println("err : ", err)
+	utils.LogError("打开存储的索引文件", err)
 	if err == bleve.ErrorIndexPathDoesNotExist { // 存储文件不存在
 		// 1. 记录下一次需要index的id
 		topicIndex, err = bleve.New(self.indexPath, self.indexMapping)
-		if err != nil {
-			log.Fatal(err)
-		}
-		flag = true
+		utils.LogError("新建索引文件", err)
 	} else {
-		log.Println("self.extraDocCount", self.extraDocCount)
-		if self.extraDocCount >= 1000 { // 如果需要额外加入索引的文档数量达到了阈值，就重新建立索引存储
-			// 1.记录下一次index的ID
-			// 2.将需要额外index的文档数量置为0
-			os.RemoveAll(self.indexPath)
-			topicIndex, err = bleve.New(self.indexPath, self.indexMapping)
-			if err != nil {
-				log.Fatal(err)
-			}
-			flag = true
-		} else if self.extraDocCount <= 0 { // 直接读取完存储的索引文件即可
-			flag = false
-		} else { // 直接追加
 			// 1.记录下一次index的文档的ID
-			// 2.记录需要append的文档的数量
 			nextDocId = self.NextDocId
-			extraDocCount = self.extraDocCount
 			needRecord = true
-			flag = true
-		}
 
 	}
 	self.i = topicIndex
-	if flag {
+	// 先通过count寻找是否需要添加增量索引
+	count := models.CountTopicFromID(int(nextDocId))
+	log.Printf("共需要建立%d条增量索引\n", count)
+
+	if count > 0 {// 若是count>0，则证明需要添加增量索引
+		log.Printf("从ID为%d开始建立增量索引\n", nextDocId)
+		// 添加增量索引之后，把配置的engine.next.doc.id记录下来，留待下一次初始化的时候启用
 		topics := models.FindTopicFrom(int(nextDocId), 0)
 		go func() {
 			err = self.indexTopic(extraDocCount, needRecord, topics)
-			if err != nil {
-				log.Fatal(err)
-			}
+			utils.LogError("建立话题索引", err)
 		}()
 	}
-	doc, err := self.i.Document("1")
-	if err != nil {
-		log.Println("get doc err ", err)
-	}
-	if doc != nil {
-		for _, v := range doc.Fields {
-			//s, _ := json.Marshal(v)
-			fmt.Printf("topicMapping.AddFieldMappingsAt(\"%s\", textFieldMapping)\n", v.Name())
-		}
-	}
+
 }
 
 func buildIndexMapping() (mapping.IndexMapping, error) {
 
 	numericFieldMapping := bleve.NewNumericFieldMapping()
-	numericFieldMapping.Analyzer = en.AnalyzerName
+	numericFieldMapping.Analyzer = standard.Name
 	textFieldMapping := bleve.NewTextFieldMapping()
-	textFieldMapping.Analyzer = en.AnalyzerName
+	textFieldMapping.Analyzer = standard.Name
 	dataTimeFieldMapping := bleve.NewDateTimeFieldMapping()
-	dataTimeFieldMapping.Analyzer = keyword.Name
+	dataTimeFieldMapping.Analyzer = standard.Name
 
 	topicMapping := bleve.NewDocumentMapping()
 	topicMapping.AddFieldMappingsAt("Id", numericFieldMapping)
@@ -126,35 +98,35 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 	topicMapping.AddFieldMappingsAt("View", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("ReplyCount", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("CollectCount", numericFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyTime", dataTimeFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyTime", dataTimeFieldMapping)
 
 	userMapping := bleve.NewDocumentMapping()
 	userMapping.AddFieldMappingsAt("User.Id", numericFieldMapping)
 	userMapping.AddFieldMappingsAt("User.Username", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Password", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Token", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Avatar", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Email", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Url", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Signature", textFieldMapping)
-	userMapping.AddFieldMappingsAt("User.InTime", dataTimeFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Password", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Token", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Avatar", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Email", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Url", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.Signature", textFieldMapping)
+	//userMapping.AddFieldMappingsAt("User.InTime", dataTimeFieldMapping)
 	topicMapping.AddSubDocumentMapping("User", userMapping)
 
 	sectionMapping := bleve.NewDocumentMapping()
-	sectionMapping.AddFieldMappingsAt("Section.Id", textFieldMapping)
+	//sectionMapping.AddFieldMappingsAt("Section.Id", textFieldMapping)
 	sectionMapping.AddFieldMappingsAt("Section.Name", textFieldMapping)
 	topicMapping.AddSubDocumentMapping("Section", sectionMapping)
 
 	lastReplyUserMapping := bleve.NewDocumentMapping()
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Id", numericFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Id", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("LastReplyUser.Username", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Password", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Token", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Avatar", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Email", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Url", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Signature", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.InTime", dataTimeFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Password", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Token", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Avatar", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Email", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Url", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.Signature", textFieldMapping)
+	//topicMapping.AddFieldMappingsAt("LastReplyUser.InTime", dataTimeFieldMapping)
 	topicMapping.AddSubDocumentMapping("LastReplyUser", lastReplyUserMapping)
 
 	indexMapping := bleve.NewIndexMapping()
@@ -166,7 +138,6 @@ func buildIndexMapping() (mapping.IndexMapping, error) {
 }
 
 func (self *indexer) indexTopic(extraDocCount int64, needRecordCount bool, topics []*models.Topic) error {
-
 	log.Printf("Indexing...")
 	count := 0
 	startTime := time.Now()
@@ -174,7 +145,6 @@ func (self *indexer) indexTopic(extraDocCount int64, needRecordCount bool, topic
 	batchCount := 0
 	for _, topic := range topics {
 		batch.Index(strconv.Itoa(topic.Id), topic)
-		extraDocCount++
 		batchCount++
 
 		if batchCount >= self.batchSize {
@@ -193,16 +163,23 @@ func (self *indexer) indexTopic(extraDocCount int64, needRecordCount bool, topic
 			log.Printf("Indexed %d documents, in %.2fs (average %.2fms/doc)", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
 		}
 	}
-	if needRecordCount {
-		beego.AppConfig.Set("engine.extra.doc.count", strconv.Itoa(int(extraDocCount)))
-	}
+
 	// flush the last batch
 	if batchCount > 0 {
 		err := self.i.Batch(batch)
-		if err != nil {
-			log.Fatal(err)
+		utils.LogError("批量索引化", err)
+	}
+	if i := len(topics) - 1; i >= 0 {
+			// 将检索到的最后一个文章的id的值记录下来
+			nextDocId := strconv.Itoa(topics[i].Id)
+			log.Printf("记录到配置文件的nextDocId为%s\n", nextDocId)
+			err := beego.AppConfig.Set("engine.next.doc.id", nextDocId)
+			utils.LogError("记录nextDocId", err)
+		if err := beego.AppConfig.SaveConfigFile("conf/app.conf"); err != nil {
+			utils.LogError("保存配置文件", err)
 		}
 	}
+
 	indexDuration := time.Since(startTime)
 	indexDurationSeconds := float64(indexDuration) / float64(time.Second)
 	timePerDoc := float64(indexDuration) / float64(count)
