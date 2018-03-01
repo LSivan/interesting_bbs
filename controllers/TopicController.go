@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"git.oschina.net/gdou-geek-bbs/engine"
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/models"
 	"git.oschina.net/gdou-geek-bbs/utils"
@@ -38,6 +39,8 @@ func (c *TopicController) Save() {
 		_, user := filters.IsLogin(c.Ctx)
 		topic := models.Topic{Title: title, Content: content, Section: &section, User: &user}
 		id := models.SaveTopic(&topic)
+		topic.Id = int(id)
+		engine.Indexer.InsertChan <- &topic
 		topicFactor := models.TopicFactor{}.New(section.Id)
 		topicFactor.Topic = &topic
 		models.SaveTopicFactor(topicFactor)
@@ -98,6 +101,7 @@ func (c *TopicController) Update() {
 		topic.Content = content
 		topic.Section = &section
 		models.UpdateTopic(&topic)
+		engine.Indexer.UpdateChan <- &topic
 		c.Redirect("/topic/"+strconv.Itoa(id), 302)
 	}
 }
@@ -108,6 +112,7 @@ func (c *TopicController) Delete() {
 		topic := models.FindTopicById(id)
 		models.DeleteTopic(&topic)
 		models.DeleteReplyByTopic(&topic)
+		engine.Indexer.DeleteChan <- &topic
 		c.Redirect("/", 302)
 	} else {
 		c.Ctx.WriteString("话题不存在")

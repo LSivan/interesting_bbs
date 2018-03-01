@@ -1,14 +1,16 @@
 package controllers
 
 import (
-	"fmt"
 	"git.oschina.net/gdou-geek-bbs/engine"
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/models"
 	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
+	//"github.com/blevesearch/bleve/search"
+	"fmt"
 	"log"
 	"strconv"
+	"sync"
 )
 
 type SearchController struct {
@@ -30,7 +32,7 @@ func (c *SearchController) Search() {
 	if err != nil {
 		log.Println("err : ", err)
 	}
-
+	log.Println(result)
 	c.Data["PageTitle"] = "\"" + q + "\"的搜索结果"
 	c.Data["IsLogin"], c.Data["UserInfo"] = filters.IsLogin(c.Controller.Ctx)
 	c.Data["q"] = q
@@ -42,12 +44,13 @@ func (c *SearchController) Search() {
 		}
 		topics := models.FindTopicByIDS(topicIDS)
 		list := make([]interface{}, 0, len(topics))
+		wg := &sync.WaitGroup{}
 		for _, v := range result.Hits {
+			//go func(v *search.DocumentMatch) {
+			//	defer wg.Done()
 			for _, topic := range topics {
-
 				if utils.MustInt(v.ID) == topic.Id {
 					topic.Content = ""
-					fmt.Println("v.Fragments", v.Fragments)
 					for _, fragments := range v.Fragments {
 						for _, fragment := range fragments {
 							topic.Content += fmt.Sprintf("...%s...", fragment)
@@ -57,8 +60,9 @@ func (c *SearchController) Search() {
 					list = append(list, topic)
 				}
 			}
+			//}(hit)
 		}
-
+		wg.Wait()
 		c.Data["Page"] = utils.PageUtil(
 			int(result.Total),
 			p,
