@@ -8,6 +8,7 @@
   <title>{{.PageTitle}}</title>
   <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="/static/css/bbs.css">
+  <link rel="shortcut icon" href="/static/ico/favicon.ico" />
   <script src="//cdn.bootcss.com/jquery/2.2.2/jquery.min.js"></script>
   <script src="//cdn.bootcss.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
@@ -56,6 +57,12 @@
                 </ul>
             </li>
       	</ul>
+      	<form class="navbar-form navbar-left" role="search" action="/search">
+            <div class="form-group">
+                <input type="text" class="form-control" name="q" value="{{.q}}" />
+            </div>
+            <button type="submit" class="btn btn-default">搜索</button>
+        </form>
         <ul class="nav navbar-nav navbar-right">
           <li>
             <a href="/about">关于</a>
