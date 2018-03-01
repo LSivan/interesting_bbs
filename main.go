@@ -10,6 +10,8 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/go-sql-driver/mysql"
+	"os"
+	"os/signal"
 )
 
 func init() {
@@ -34,12 +36,22 @@ func init() {
 func main() {
 	// TODO 更多话题/回复/收藏
 	// TODO README.md
-	orm.Debug = true
-	//ok, err := regexp.MatchString("/topic/edit/[0-9]+", "/topic/edit/123")
-	//beego.Debug(ok, err)
+	// orm.Debug = true // 开启数据库日志
+	// 更改用户因素的定时器
 	go cron.SetupCron()
-	//_,user := models.FindUserById(2)
-	//models.FindCollectTopicByUser(&user,7)
+	// 对话题文章进行索引
 	go engine.Indexer.Index()
+	// 捕获ctrl-c
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for _ = range c {
+			beego.BeeLogger.Info("捕获Ctrl-c，退出服务器\n")
+			engine.Indexer.Exit <- struct{}{}
+			<- engine.Indexer.Fin
+			os.Exit(0)
+		}
+	}()
+	// http服务
 	beego.Run()
 }
