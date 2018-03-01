@@ -761,7 +761,7 @@ body {
 .wrapper {
     width: 100%;
     background-color: #e2e2e2;
-    min-height: 900px;
+    min-height: 750px;
 }
 
 .title a:visited {
