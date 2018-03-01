@@ -1,10 +1,12 @@
 package utils
 
-import "log"
+import (
+	"github.com/astaxie/beego"
+)
 
 func LogError(action string, err error) {
 	if err != nil {
-		log.Printf("%s失败，err：%v\n", action,err)
+		beego.BeeLogger.Error("%s失败，err：%v\n", action,err)
 	}
-	log.Printf("%s成功\n", action)
+	beego.BeeLogger.Debug("%s成功\n", action)
 }
