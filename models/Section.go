@@ -23,3 +23,9 @@ func FindSectionById(id int) (bool, Section) {
 	err := o.QueryTable(section).RelatedSel().Filter("Id", id).One(&section)
 	return err != orm.ErrNoRows, section
 }
+func FindSectionByIDS(IDS []int) []*Section {
+	o := orm.NewOrm()
+	var sections []*Section
+	o.QueryTable(Section{}).RelatedSel().Filter("id__in", IDS).All(&sections)
+	return sections
+}

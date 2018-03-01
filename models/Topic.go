@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"strconv"
 	"time"
+	"sync"
 )
 
 type Topic struct {
@@ -160,20 +161,37 @@ func findTopicByUserAndActionType(user *User, actionType int, limit int, p int) 
 }
 
 var fillTopicFields = func(topics *[]*Topic) {
-	for i, t := range *topics {
-		b, user := FindUserById(t.User.Id)
-		if b {
-			t.User = &user
+	if topics != nil && len(*topics) > 0 {
+		userIDS := make([]int, 1, len(*topics)*2)
+		sectionIDS := make([]int, 1, len(*topics))
+		for _, t := range *topics {
+			userIDS = append(userIDS, t.User.Id, t.LastReplyUser.Id)
+			sectionIDS = append(sectionIDS, t.Section.Id)
 		}
-		b, section := FindSectionById(t.Section.Id)
-		if b {
-			t.Section = &section
+		users := FindUserByIDS(userIDS)
+		sections := FindSectionByIDS(sectionIDS)
+		wg := &sync.WaitGroup{}
+		for j, topic := range *topics {
+			wg.Add(1)
+			go func(t *Topic, i int) {
+				defer wg.Done()
+				for _,user := range users {
+					if t.User.Id == user.Id {
+						t.User = user
+					}
+					if t.LastReplyUser.Id == user.Id {
+						t.LastReplyUser = user
+					}
+				}
+				for _, section := range sections {
+					if t.Section.Id == section.Id {
+						t.Section = section
+					}
+				}
+				(*topics)[i] = t // t只是循环的时候的一个变量，必须要赋值到topics上
+			}(topic,j)
 		}
-		b, lastReplyUser := FindUserById(t.User.Id)
-		if b {
-			t.LastReplyUser = &lastReplyUser
-		}
-		(*topics)[i] = t // t只是循环的时候的一个变量，必须要赋值到topics上
+		wg.Wait()
 	}
 }
 

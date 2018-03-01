@@ -33,6 +33,13 @@ func FindUserById(id int) (bool, User) {
 	return err != orm.ErrNoRows, user
 }
 
+func FindUserByIDS(IDS []int) ([]*User) {
+	o := orm.NewOrm()
+	var users []*User
+	o.QueryTable(User{}).Filter("id__in", IDS).All(&users)
+	return  users
+}
+
 func FindUserByToken(token string) (bool, User) {
 	o := orm.NewOrm()
 	var user User
