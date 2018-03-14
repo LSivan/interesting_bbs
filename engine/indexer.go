@@ -6,7 +6,6 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/standard"
-	"github.com/blevesearch/bleve/analysis/lang/en"
 	"github.com/blevesearch/bleve/mapping"
 	"log"
 	"strconv"
@@ -120,57 +119,37 @@ func (self *indexer) Index() {
 }
 
 func buildIndexMapping() (mapping.IndexMapping, error) {
-
 	numericFieldMapping := bleve.NewNumericFieldMapping()
 	numericFieldMapping.Analyzer = standard.Name
 	textFieldMapping := bleve.NewTextFieldMapping()
 	textFieldMapping.Analyzer = standard.Name
-	dataTimeFieldMapping := bleve.NewDateTimeFieldMapping()
-	dataTimeFieldMapping.Analyzer = standard.Name
 
 	topicMapping := bleve.NewDocumentMapping()
-	topicMapping.AddFieldMappingsAt("Id", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("Title", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("Content", textFieldMapping)
-	topicMapping.AddFieldMappingsAt("InTime", dataTimeFieldMapping)
+	contentFieldMapping := bleve.NewTextFieldMapping()
+	contentFieldMapping.Store = false
+	topicMapping.AddFieldMappingsAt("Content", contentFieldMapping)
 	topicMapping.AddFieldMappingsAt("View", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("ReplyCount", numericFieldMapping)
 	topicMapping.AddFieldMappingsAt("CollectCount", numericFieldMapping)
 	//topicMapping.AddFieldMappingsAt("LastReplyTime", dataTimeFieldMapping)
 
-	userMapping := bleve.NewDocumentMapping()
-	userMapping.AddFieldMappingsAt("User.Id", numericFieldMapping)
-	userMapping.AddFieldMappingsAt("User.Username", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Password", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Token", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Avatar", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Email", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Url", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.Signature", textFieldMapping)
-	//userMapping.AddFieldMappingsAt("User.InTime", dataTimeFieldMapping)
-	topicMapping.AddSubDocumentMapping("User", userMapping)
+	usernameFieldMapping := bleve.NewTextFieldMapping()
 
-	sectionMapping := bleve.NewDocumentMapping()
-	//sectionMapping.AddFieldMappingsAt("Section.Id", textFieldMapping)
-	sectionMapping.AddFieldMappingsAt("Section.Name", textFieldMapping)
-	topicMapping.AddSubDocumentMapping("Section", sectionMapping)
+	usernameFieldMapping.Store = false
+	beego.BeeLogger.Debug("usernameFieldMapping.Options().IsStored():%v\n;",usernameFieldMapping.Options())
+	beego.BeeLogger.Debug("	o&StoreField != 0:%v\n;",usernameFieldMapping.Options()&2)
+	topicMapping.AddFieldMappingsAt("Username", usernameFieldMapping)
 
-	lastReplyUserMapping := bleve.NewDocumentMapping()
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Id", numericFieldMapping)
-	topicMapping.AddFieldMappingsAt("LastReplyUser.Username", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Password", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Token", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Avatar", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Email", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Url", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.Signature", textFieldMapping)
-	//topicMapping.AddFieldMappingsAt("LastReplyUser.InTime", dataTimeFieldMapping)
-	topicMapping.AddSubDocumentMapping("LastReplyUser", lastReplyUserMapping)
+	topicMapping.AddFieldMappingsAt("SectionName", textFieldMapping)
+
+	topicMapping.AddFieldMappingsAt("LastReplyUsername", textFieldMapping)
 
 	indexMapping := bleve.NewIndexMapping()
+
 	indexMapping.AddDocumentMapping("topic", topicMapping)
-	indexMapping.TypeField = "type"
-	indexMapping.DefaultAnalyzer = en.AnalyzerName
+	//indexMapping.TypeField = "type"
+	indexMapping.DefaultAnalyzer = standard.Name
 
 	return indexMapping, nil
 }
@@ -179,20 +158,22 @@ func (self *indexer) indexTopic(needRecordCount bool, topics []*models.Topic) er
 	beego.BeeLogger.Info("Indexing...\n")
 	count := 0
 	startTime := time.Now()
-	batch := self.i.NewBatch()
-	batchCount := 0
+	//batch := self.i.NewBatch()
+	//batchCount := 0
 	for _, topic := range topics {
-		batch.Index(strconv.Itoa(topic.Id), topic)
-		batchCount++
-
-		if batchCount >= self.batchSize {
-			err := self.i.Batch(batch)
-			if err != nil {
-				return err
-			}
-			batch = self.i.NewBatch()
-			batchCount = 0
-		}
+		self.i.Index(strconv.Itoa(topic.Id), transformIndexTopic(topic))
+		time.Sleep(1*time.Second)
+		//batch.Index(strconv.Itoa(topic.Id), transformIndexTopic(topic))
+		//batchCount++
+		//
+		//if batchCount >= self.batchSize {
+		//	err := self.i.Batch(batch)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	batch = self.i.NewBatch()
+		//	batchCount = 0
+		//}
 		count++
 		if count%1000 == 0 {
 			indexDuration := time.Since(startTime)
@@ -203,11 +184,11 @@ func (self *indexer) indexTopic(needRecordCount bool, topics []*models.Topic) er
 	}
 
 	// flush the last batch
-	if batchCount > 0 {
-		err := self.i.Batch(batch)
-		utils.LogError("批量索引化", err)
-		batchCount = 0
-	}
+	//if batchCount > 0 {
+	//	err := self.i.Batch(batch)
+	//	utils.LogError("批量索引化", err)
+	//	batchCount = 0
+	//}
 	if i := len(topics) - 1; i >= 0 {
 		// 将检索到的最后一个文章的id的值记录下来
 		nextDocId := strconv.Itoa(topics[i].Id)
@@ -225,4 +206,31 @@ func (self *indexer) indexTopic(needRecordCount bool, topics []*models.Topic) er
 	beego.BeeLogger.Info("Indexed %d documents, in %.2fs (average %.2fms/doc)", count, indexDurationSeconds, timePerDoc/float64(time.Millisecond))
 
 	return nil
+}
+
+type indexTopic struct {
+	Title             string
+	Content           string
+	Username          string
+	SectionName       string
+	LastReplyUsername string
+	View              int
+	ReplyCount        int
+	CollectCount      int
+}
+
+func transformIndexTopic(topic *models.Topic) *indexTopic {
+	i := &indexTopic{
+		Title:        topic.Title,
+		Content:      topic.Content,
+		Username:     topic.User.Username,
+		SectionName:  topic.Section.Name,
+		View:         topic.View,
+		ReplyCount:   topic.ReplyCount,
+		CollectCount: topic.CollectCount,
+	}
+	if topic.LastReplyUser != nil {
+		i.LastReplyUsername = topic.LastReplyUser.Username
+	}
+	return i
 }

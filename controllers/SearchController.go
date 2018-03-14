@@ -1,16 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"git.oschina.net/gdou-geek-bbs/engine"
 	"git.oschina.net/gdou-geek-bbs/filters"
 	"git.oschina.net/gdou-geek-bbs/models"
 	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
-	//"github.com/blevesearch/bleve/search"
-	"fmt"
-	"log"
 	"strconv"
-	"sync"
+	"unicode/utf8"
 )
 
 type SearchController struct {
@@ -29,10 +27,8 @@ func (c *SearchController) Search() {
 		p = 1
 	}
 	result, err := searcher.Search(q, p)
-	if err != nil {
-		log.Println("err : ", err)
-	}
-	log.Println(result)
+	utils.LogError("全文检索", err)
+	beego.BeeLogger.Debug("%v\n", result.String())
 	c.Data["PageTitle"] = "\"" + q + "\"的搜索结果"
 	c.Data["IsLogin"], c.Data["UserInfo"] = filters.IsLogin(c.Controller.Ctx)
 	c.Data["q"] = q
@@ -44,31 +40,45 @@ func (c *SearchController) Search() {
 		}
 		topics := models.FindTopicByIDS(topicIDS)
 		list := make([]interface{}, 0, len(topics))
-		wg := &sync.WaitGroup{}
 		for _, v := range result.Hits {
-			//go func(v *search.DocumentMatch) {
-			//	defer wg.Done()
 			for _, topic := range topics {
 				if utils.MustInt(v.ID) == topic.Id {
-					topic.Content = ""
-					for _, fragments := range v.Fragments {
-						for _, fragment := range fragments {
-							topic.Content += fmt.Sprintf("...%s...", fragment)
-						}
 
+					for fragmentField, fragments := range v.Fragments {
+						flag := true
+						for _, fragment := range fragments {
+							if fragmentField == "Title" {
+								topic.Title = fragment
+							} else if fragmentField == "Username" {
+								topic.User.Username = fragment
+							} else if fragmentField == "LastReplyUsername" {
+								topic.LastReplyUser.Username = fragment
+							} else if fragmentField == "SectionName" {
+								topic.Section.Name = fragment
+							} else {
+								if flag {
+									topic.Content = ""
+									flag = false
+								}
+								topic.Content += fmt.Sprintf("...%s...", fragment)
+							}
+						}
+					}
+					if contentByte := []byte(topic.Content); utf8.RuneCount(contentByte) >= 400 {
+						topic.Content = string(contentByte[0:400])
 					}
 					list = append(list, topic)
 				}
 			}
-			//}(hit)
 		}
-		wg.Wait()
 		c.Data["Page"] = utils.PageUtil(
 			int(result.Total),
 			p,
 			beego.AppConfig.DefaultInt("page.size", 8),
 			list,
 		)
+	} else {
+		c.Data["Tips"] = "木有结果喔(⊙o⊙)，换个关键字试试呗~~"
 	}
 	c.Layout = "layout/layout.tpl"
 	c.TplName = "search.tpl"

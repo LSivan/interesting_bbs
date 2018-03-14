@@ -3,6 +3,7 @@ package utils
 import (
 	"strconv"
 	"strings"
+	"encoding/json"
 )
 
 func NoHtml(str string) string {
@@ -14,4 +15,12 @@ func MustInt(str string) int {
 		return v
 	}
 	return 0
+}
+
+func MustJson(data interface{}) string {
+	s, err := json.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(s)
 }

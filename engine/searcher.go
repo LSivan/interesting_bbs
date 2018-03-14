@@ -1,15 +1,15 @@
 package engine
 
 import (
+	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/search/query"
-	"sync"
-	"github.com/blevesearch/bleve/search"
-	"github.com/huichen/sego"
 	"github.com/blevesearch/bleve/analysis/analyzer/standard"
+	"github.com/blevesearch/bleve/search"
+	"github.com/blevesearch/bleve/search/query"
+	"github.com/huichen/sego"
 	"strings"
-	"git.oschina.net/gdou-geek-bbs/utils"
+	"sync"
 )
 
 // 负责检索
@@ -20,6 +20,7 @@ type Searcher struct {
 var searchRequest *bleve.SearchRequest
 var pageSize int
 var segmenter sego.Segmenter
+
 func init() {
 	once := &sync.Once{}
 
@@ -48,31 +49,26 @@ func (searcher *Searcher) Search(q string, p int) (*bleve.SearchResult, error) {
 
 	mpQuery.Analyzer = standard.Name
 	searchRequest.Sort = search.SortOrder{
-		&search.SortField{
-			Field:"InTime",
-			Desc:true,
-		},
-
-		&search.SortField{
-			Field:"CollectCount",
-			Desc:true,
-		},
 		&search.SortScore{
-			Desc:true,
+			Desc: true,
 		},
 		&search.SortField{
-			Field:"View",
-			Desc:true,
+			Field: "CollectCount",
+			Desc:  true,
 		},
 		&search.SortField{
-			Field:"ReplyCount",
-			Desc:true,
+			Field: "ReplyCount",
+			Desc:  true,
 		},
-		}
+		&search.SortField{
+			Field: "View",
+			Desc:  true,
+		},
+	}
 	searchRequest.Query = mpQuery
 
 	searchResult, err := Indexer.i.Search(searchRequest)
-	utils.LogError("从索引查找",err)
+	utils.LogError("从索引查找", err)
 	if len(searchResult.Hits) == 0 { // 假设在不切割的情况下就已经能搜索到了，直接将结果返回
 		// 不切割的时候搜索不到，则进行切割
 		terms := sego.SegmentsToSlice(segmenter.Segment([]byte(strings.TrimSpace(q))), true)
@@ -86,9 +82,19 @@ func (searcher *Searcher) Search(q string, p int) (*bleve.SearchResult, error) {
 		conjunctionQuery := bleve.NewDisjunctionQuery(queries...)
 		searchRequest.Query = conjunctionQuery
 		searchResult, err = Indexer.i.Search(searchRequest)
-		utils.LogError("从索引查找",err)
+		utils.LogError("从索引查找", err)
 		if err != nil {
 			return nil, err
+		}
+	}
+	for _, v := range searchResult.Hits {
+		doc, err := Indexer.i.Document(v.ID)
+		utils.LogError("获取索引的文档", err)
+
+		if doc != nil {
+			for _, v := range doc.Fields {
+				beego.BeeLogger.Debug("name :%s, value : %s\n", v.Name(), string(v.Value()))
+			}
 		}
 	}
 	return searchResult, nil

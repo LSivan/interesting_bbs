@@ -4,6 +4,7 @@
     <div class="panel panel-default">
     {{ if .IsLogin }}
       <div class="panel-body paginate-bot">
+        <h3>{{.Tips}}</h3>
         {{range .Page.List}}
         <div class="media">
           <div class="media-left">
@@ -11,15 +12,15 @@
           </div>
           <div class="media-body">
             <div class="title">
-              <a href="/topic/{{.Id}}?flag=true">{{.Title}}</a>
+              <a href="/topic/{{.Id}}?flag=true" class="fragments">{{.Title}}</a>
             </div>
             <div class="fragments">
-              <p>{{.Content}}<p>
+              {{.Content}}
             </div>
             <p class="gray">
-              <span class="label label-primary">{{.Section.Name}}</span>
+              <span class="label label-primary fragments">{{.Section.Name}}</span>
               <span>•</span>
-              <span><a href="/user/{{.User.Username}}">{{.User.Username}}</a></span>
+              <span><a href="/user/{{.User.Username}}" class="fragments">{{.User.Username}}</a></span>
               <span class="hidden-sm hidden-xs">•</span>
               <span class="hidden-sm hidden-xs">{{.ReplyCount}}个回复</span>
               <span class="hidden-sm hidden-xs">•</span>
@@ -66,13 +67,13 @@
     $("#tab_{{.S}}").addClass("active");
     $(".fragments").each(function() {
         var $this = $(this);
-        var fragment = $this.children().text();
+        var fragment = $this.text();
 
-        //console.log("2 --- "+fragment.replace(/mark/g, '<font color="red" '));
-        console.log("1    --"+fragment.replace(/<mark/g, '<font color="red"').replace(/mark\>/g, 'font>'));
-        //console.log("2    --"+fragment);
+        //console.log("1    --"+fragment.replace(/<mark/g, '<font color="red"').replace(/mark\>/g, 'font>'));
+
         $this.html(fragment.replace(/<mark/g, '<font color="red"').replace(/mark\>/g, 'font>'));
     });
+
     $("#page").bootstrapPaginator({
       currentPage: '{{.Page.PageNo}}',
       totalPages: '{{.Page.TotalPage}}',
@@ -81,9 +82,9 @@
       onPageClicked: function(e,originalEvent,type,page){
         var s = {{.S}};
         if (s > 0) {
-          window.location.href = "/favorite?p=" + page + "&s={{.S}}"
+          window.location.href = "/search?p=" + page + "&q={{.q}}"
         } else {
-          window.location.href = "/favorite?p=" + page
+          window.location.href = "/search?p=" + page + "&q={{.q}}"
         }
       }
     });
