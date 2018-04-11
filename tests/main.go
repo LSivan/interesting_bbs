@@ -1,21 +1,20 @@
 package main
 
 import (
-	"github.com/robfig/cron"
-	"git.oschina.net/gdou-geek-bbs/models"
-	"github.com/astaxie/beego/logs"
+	"github.com/huichen/sego"
+	"fmt"
 )
 
 func main() {
-	c := cron.New()
-	spec := "*/5 * * * * ?"
-	c.AddFunc(spec, func() {
-		list := models.FindUserFactorChangeSum()
-		for _,v := range list {
-			logs.Debug("v  : ",v)
-		}
-	})
-	c.Start()
+	// 载入词典
+	var segmenter sego.Segmenter
+	segmenter.LoadDictionary("/home/sivan/go/src/git.oschina.net/gdou-geek-bbs/tests/dictionary.txt")
 
-	select{}
+	// 分词
+	text := []byte("中华人民共和国")
+	segments := segmenter.Segment(text)
+
+	// 处理分词结果
+	// 支持普通模式和搜索模式两种分词，见代码中SegmentsToString函数的注释。
+	fmt.Println(sego.SegmentsToSlice(segments, true))
 }
