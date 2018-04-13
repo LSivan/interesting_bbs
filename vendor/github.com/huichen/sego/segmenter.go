@@ -41,8 +41,10 @@ func (seg *Segmenter) Dictionary() *Dictionary {
 //
 // 词典的格式为（每个分词一行）：
 //	分词文本 频率 词性
+var KeywordMap map[string]int
 func (seg *Segmenter) LoadDictionary(files string) {
 	seg.dict = NewDictionary()
+	KeywordMap = make(map[string]int, 300)
 	for _, file := range strings.Split(files, ",") {
 		log.Printf("载入sego词典 %s", file)
 		dictFile, err := os.Open(file)
@@ -56,7 +58,7 @@ func (seg *Segmenter) LoadDictionary(files string) {
 		var freqText string
 		var frequency int
 		var pos string
-
+		var i int
 		// 逐行读入分词
 		for {
 			size, _ := fmt.Fscanln(reader, &text, &freqText, &pos)
@@ -71,7 +73,9 @@ func (seg *Segmenter) LoadDictionary(files string) {
 				// 没有词性标注时设为空字符串
 				pos = ""
 			}
-
+			// 记录关键字和数组下标的对应关系,用于用户和话题的特征值计算
+			KeywordMap[strings.ToLower(text)] = i
+			i++
 			// 解析词频
 			var err error
 			frequency, err = strconv.Atoi(freqText)
@@ -90,7 +94,6 @@ func (seg *Segmenter) LoadDictionary(files string) {
 			seg.dict.addToken(token)
 		}
 	}
-
 	// 计算每个分词的路径值，路径值含义见Token结构体的注释
 	logTotalFrequency := float32(math.Log2(float64(seg.dict.totalFrequency)))
 	for i := range seg.dict.tokens {
