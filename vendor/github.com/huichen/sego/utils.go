@@ -3,8 +3,6 @@ package sego
 import (
 	"bytes"
 	"fmt"
-	"strings"
-	"math"
 )
 
 // 输出分词结果为字符串
@@ -84,36 +82,6 @@ func SegmentsToFreqMap(segs []Segment) (output map[string]int) {
 	}
 	return
 }
-/**
-salt 影响特征值的一个数
- */
-func SegmentsToFeatureSlice(segs []Segment, salt float64) (feature []float64) {
-	output := make([]int,len(KeywordMap))
-	feature = make([]float64,len(KeywordMap))
-	total := 0
-	for _, seg := range segs {
-		word := seg.token.Text()
-		if index,exist := KeywordMap[strings.ToLower(word)];exist {
-			i := output[index]
-			output[index] = i + 1
-			total++
-		}
-	}
-	var log10 = func(num float64) float64 {
-		num = math.Log10(num+10+salt)
-		// 防止恶意刷关键字
-		for num > 2.33 {
-			num = math.Log10(num)
-		}
-		return num - 1
-	}
-	for index, i := range output {
-		feature[index] = log10(float64(i))+float64(i)/float64(total)
-
-	}
-	return
-}
-
 
 func tokenToSlice(token *Token) (output []string) {
 	hasOnlyTerminalToken := true
