@@ -10,7 +10,7 @@ import (
 )
 
 func FormatTime(time time.Time) string {
-	return timeago.Chinese.Format(time)
+	return timeago.English.Format(time)
 }
 
 func Markdown(content string) string {

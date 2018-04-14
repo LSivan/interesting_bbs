@@ -39,3 +39,8 @@ func TestFinDic(t *testing.T) {
 		line,_, _ = r.ReadLine()
 	}
 }
+
+func TestLenMap(t *testing.T) {
+	var KeywordMap = make(map[string]int, 300)
+	fmt.Println(len(KeywordMap))
+}

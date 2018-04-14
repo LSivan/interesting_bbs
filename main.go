@@ -12,6 +12,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"os/signal"
+	"git.oschina.net/gdou-geek-bbs/common"
+	"git.oschina.net/gdou-geek-bbs/feature"
 )
 
 func init() {
@@ -52,6 +54,10 @@ func main() {
 			os.Exit(0)
 		}
 	}()
+	// redis服务
+	common.SetupRedis()
+	// 提取文章特征值
+	feature.InitTopicFeature()
 	// http服务
 	beego.Run()
 }

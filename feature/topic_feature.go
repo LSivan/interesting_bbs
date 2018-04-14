@@ -1,18 +1,28 @@
-package main
+package feature
 
 import (
 	"git.oschina.net/gdou-geek-bbs/models"
-	"github.com/huichen/sego"
 	"time"
 	"encoding/json"
+	"git.oschina.net/gdou-geek-bbs/common"
+	"strconv"
 )
 
-// TODO 话题的特征值提取与存储
+// TODO 话题的特征值提取与存储 - fin
+// TODO 用户特征值如何变化
 // TODO 用户的特征值提取与存储
 // TODO 更改推荐的算法
 // 将所有的文章分析好特征并存到redis中
-func init() {
+func InitTopicFeature() {
+	// 取出所有的文章
+	topics := models.FindTopicFrom(0,models.CountTopicFromID(0))
+	for _, topic := range topics {
+		go func(t *models.Topic) {
+			feature := GetTopicFeature(t)
+			common.Redis.HSet("topic-feature",strconv.Itoa(feature.ID),feature)
+		}(topic)
 
+	}
 }
 
 type TopicFeature struct {
@@ -32,7 +42,7 @@ func (tf *TopicFeature) UnmarshalBinary(data []byte) error {
 // 存了
 func GetTopicFeature(topic *models.Topic) *TopicFeature{
 	return &TopicFeature{
-		sego.SegmentsToFeatureSlice(segmenter.Segment([]byte(topic.Title+topic.Content+topic.Section.Name)),0),
+		SegmentsToFeatureSlice(segment.Segment([]byte(topic.Title+topic.Content+topic.Section.Name)),0),
 		topic.InTime,
 		topic.Id,
 	}
