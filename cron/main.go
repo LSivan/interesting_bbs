@@ -4,6 +4,8 @@ import (
 	"git.oschina.net/gdou-geek-bbs/models"
 	//"github.com/astaxie/beego/logs"
 	"github.com/robfig/cron"
+	"git.oschina.net/gdou-geek-bbs/recommend"
+	"github.com/astaxie/beego"
 )
 
 var c *cron.Cron
@@ -13,13 +15,15 @@ func init() {
 }
 
 func SetupCron() {
-	spec := "02 02 04 * * ?" // 每天凌晨的4:02:02进行因子的变化
-	//spec := "*/10 * * * * ?"
-	c.AddFunc(spec, changeTopicFactor)
-	c.AddFunc(spec, changeUserFactor)
+	//spec := "02 02 04 * * ?" // 每天凌晨的4:02:02进行因子的变化
+	beego.BeeLogger.Info("每天凌晨的4:02:02进行因子的变化")
+	spec := "*/10 * * * * ?"
+	c.AddFunc(spec, recommend.GetUsersFavoriteList)
+	//c.AddFunc(spec, changeUserFactor)
 	c.Start()
 	select {}
 }
+
 
 var changeTopicFactor = func() {
 	var updateTopicFactor = func(tmpTopicFactor models.TmpTopicFactor){

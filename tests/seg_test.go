@@ -20,8 +20,6 @@ func TestSegment(t *testing.T) {
 	// 处理分词结果
 	// 支持普通模式和搜索模式两种分词，见代码中SegmentsToString函数的注释。
 	fmt.Println(sego.SegmentsToSlice(segments,false))
-
-	fmt.Println(sego.SegmentsToFeatureSlice(segments,0))
 }
 
 func TestFinDic(t *testing.T) {

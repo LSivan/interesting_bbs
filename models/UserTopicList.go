@@ -26,6 +26,13 @@ func FindTopicByUserAndTopicAndActionType(user *User, topic *Topic, actionType i
 	return err != orm.ErrNoRows, &userTopicList
 }
 
+func FindAllUserTopicList() ( *[]UserTopicList) {
+	o := orm.NewOrm()
+	var userTopicList []UserTopicList
+	o.QueryTable(UserTopicList{}).RelatedSel().All(&userTopicList)
+	return  &userTopicList
+}
+
 func DeleteUserTopic(userTopicList *UserTopicList) {
 	o := orm.NewOrm()
 	o.Delete(userTopicList)

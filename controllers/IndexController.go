@@ -97,6 +97,7 @@ func (c *IndexController) Register() {
 		userFactor := models.UserFactor{}.New(sections)
 		userFactor.User = &user
 		models.SaveUserFactor(userFactor)
+		/** 赋予用户默认的特征值 **/
 
 		c.SetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"), token, 30*24*60*60, "/", beego.AppConfig.String("cookie.domain"), false, true)
 		c.Redirect("/", 302)

@@ -40,6 +40,21 @@ func FindUserByIDS(IDS []int) ([]*User) {
 	return  users
 }
 
+func FindUserFrom(ID, limit int) ([]*User) {
+	o := orm.NewOrm()
+	var users []*User
+	o.QueryTable(User{}).Filter("id__gt", ID).Limit(limit).All(&users)
+	return  users
+}
+func CountUserFromID(id int) int {
+	o := orm.NewOrm()
+	var user User
+	count, err := o.QueryTable(user).Filter("id__gt", id).Count()
+	if err == nil {
+		return int(count)
+	}
+	return 0
+}
 func FindUserByToken(token string) (bool, User) {
 	o := orm.NewOrm()
 	var user User

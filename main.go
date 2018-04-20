@@ -1,7 +1,6 @@
 package main
 
 import (
-	"git.oschina.net/gdou-geek-bbs/cron"
 	"git.oschina.net/gdou-geek-bbs/engine"
 	"git.oschina.net/gdou-geek-bbs/models"
 	_ "git.oschina.net/gdou-geek-bbs/routers"
@@ -13,7 +12,8 @@ import (
 	"os"
 	"os/signal"
 	"git.oschina.net/gdou-geek-bbs/common"
-	"git.oschina.net/gdou-geek-bbs/feature"
+	"git.oschina.net/gdou-geek-bbs/recommend"
+	"git.oschina.net/gdou-geek-bbs/cron"
 )
 
 func init() {
@@ -36,11 +36,8 @@ func init() {
 }
 
 func main() {
-	// TODO 更多话题/回复/收藏
-	// TODO README.md
-	// orm.Debug = true // 开启数据库日志
-	// 更改用户因素的定时器
-	go cron.SetupCron()
+	 //orm.Debug = true // 开启数据库日志
+
 	// 对话题文章进行索引
 	go engine.Indexer.Index()
 	// 捕获ctrl-c
@@ -57,7 +54,13 @@ func main() {
 	// redis服务
 	common.SetupRedis()
 	// 提取文章特征值
-	feature.InitTopicFeature()
+	recommend.InitTopicFeature()
+	// 提取用户特征值
+	recommend.InitUserFeature()
+	// 将用户的喜好列表存到redis中
+	//recommend.GetUsersFavoriteList()
+	// 更改用户兴趣的定时器
+	go cron.SetupCron()
 	// http服务
 	beego.Run()
 }
