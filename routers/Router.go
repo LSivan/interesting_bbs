@@ -38,6 +38,7 @@ func init() {
 	beego.Router("/topic/cancel_black/:id([0-9]+)", &controllers.TopicController{}, "POST:CancelBlack")
 
 	beego.InsertFilter("/reply/save", beego.BeforeRouter, filters.FilterUser)
+	beego.InsertFilter("/reply/save", beego.AfterExec, filters.ReplyChangeFactor)
 	beego.Router("/reply/save", &controllers.ReplyController{}, "POST:Save")
 	beego.InsertFilter("/reply/up", beego.BeforeRouter, filters.FilterUser)
 	beego.Router("/reply/up", &controllers.ReplyController{}, "GET:Up")

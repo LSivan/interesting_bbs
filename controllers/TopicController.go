@@ -7,6 +7,8 @@ import (
 	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
 	"strconv"
+	"git.oschina.net/gdou-geek-bbs/recommend"
+	"git.oschina.net/gdou-geek-bbs/common"
 )
 
 type TopicController struct {
@@ -41,9 +43,19 @@ func (c *TopicController) Save() {
 		id := models.SaveTopic(&topic)
 		topic.Id = int(id)
 		engine.Indexer.InsertChan <- &topic
-		topicFactor := models.TopicFactor{}.New(section.Id)
-		topicFactor.Topic = &topic
-		models.SaveTopicFactor(topicFactor)
+		//topicFactor := models.TopicFactor{}.New(section.Id)
+		//topicFactor.Topic = &topic
+		//models.SaveTopicFactor(topicFactor)
+		go func(t *models.Topic) {
+			feature := recommend.GetTopicFeature(t)
+			err := common.Redis.HSet("topic-feature",strconv.Itoa(t.Id),feature).Err()
+			if err != nil {
+				// 一般分词没有结果,导致feature.tokens为[NaN,NaN]而不能存进redis中,从而过滤无关的文章,TODO 可以用来更新关键字列表
+				beego.BeeLogger.Info("recommend.ID:%v, err :%v",feature.ID, err)
+			}
+			recommend.ChangeUserFeature(user.Id,4,t)
+		}(&topic)
+
 		c.Redirect("/topic/"+strconv.FormatInt(id, 10), 302)
 	}
 }

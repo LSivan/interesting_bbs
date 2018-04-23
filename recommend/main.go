@@ -15,7 +15,7 @@ import (
 var dictionary = "recommend/dic.txt"
 var KeywordMap map[string]int // 存放关键字和数组对应关系的m
 var segment = &sego.Segmenter{}
-var defaultFeature []float64
+var defaultFeatures []float64
 
 func init() {
 	KeywordMap = make(map[string]int, 300)
@@ -43,7 +43,7 @@ func init() {
 		}
 	}
 	beego.BeeLogger.Info("keywordMap:%v", len(KeywordMap))
-	defaultFeature = make([]float64, len(KeywordMap))
+	defaultFeatures = make([]float64, len(KeywordMap))
 }
 
 /**

@@ -6,6 +6,9 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/sluu99/uuid"
 	"strconv"
+	"git.oschina.net/gdou-geek-bbs/common"
+	"git.oschina.net/gdou-geek-bbs/recommend"
+	"git.oschina.net/gdou-geek-bbs/utils"
 )
 
 type IndexController struct {
@@ -77,7 +80,7 @@ func (c *IndexController) RegisterPage() {
 //验证注册
 func (c *IndexController) Register() {
 	flash := beego.NewFlash()
-	username, password, sections := c.Input().Get("username"), c.Input().Get("password"), c.Ctx.Request.Form["sections"]
+	username, password := c.Input().Get("username"), c.Input().Get("password")
 	if len(username) == 0 || len(password) == 0 {
 		flash.Error("用户名或密码不能为空")
 		flash.Store(&c.Controller)
@@ -94,11 +97,12 @@ func (c *IndexController) Register() {
 		commonUserId, _ := beego.AppConfig.Int("constant.common_user_id")
 		models.SaveUserRole(user.Id, commonUserId)
 		/** 根据用户选的感兴趣的模块赋用户因子 **/
-		userFactor := models.UserFactor{}.New(sections)
-		userFactor.User = &user
-		models.SaveUserFactor(userFactor)
+		//userFactor := models.UserFactor{}.New(sections)
+		//userFactor.User = &user
+		//models.SaveUserFactor(userFactor)
 		/** 赋予用户默认的特征值 **/
-
+		// 放回到redis中
+		common.Redis.HSet("user-feature", strconv.Itoa(user.Id), recommend.DefaultUserFeature)
 		c.SetSecureCookie(beego.AppConfig.String("cookie.secure"), beego.AppConfig.String("cookie.token"), token, 30*24*60*60, "/", beego.AppConfig.String("cookie.domain"), false, true)
 		c.Redirect("/", 302)
 	}
@@ -123,8 +127,9 @@ func (c *IndexController) About() {
 func (c *IndexController) Favorite() {
 
 	c.Data["PageTitle"] = "猜你喜欢"
-	c.Data["IsLogin"], c.Data["UserInfo"] = filters.IsLogin(c.Controller.Ctx)
-	c.Data["IsFavorite"] = true
+	isLogin, user := filters.IsLogin(c.Controller.Ctx)
+	c.Data["IsLogin"], c.Data["UserInfo"] = isLogin,user
+		c.Data["IsFavorite"] = true
 	p, _ := strconv.Atoi(c.Ctx.Input.Query("p"))
 	if p == 0 {
 		p = 1
@@ -132,9 +137,23 @@ func (c *IndexController) Favorite() {
 	size, _ := beego.AppConfig.Int("page.size")
 	s, _ := strconv.Atoi(c.Ctx.Input.Query("s"))
 	c.Data["S"] = s
-	_, user := filters.IsLogin(c.Ctx)
-
-	c.Data["Page"] = models.FavoritePageTopic(p, size, &user)
+	sc := common.Redis.HGet("user-favorite",strconv.Itoa(user.Id))
+	if err := sc.Err(); err != nil {
+		beego.BeeLogger.Error("get %s favorite list err : %v", user.Id, err)
+	}
+	ft := &recommend.FavoriteTopic{}
+	if err := ft.UnmarshalBinary([]byte(sc.Val())); err != nil {
+		beego.BeeLogger.Error("get %s favorite list err : %v", user.Id, err)
+	}
+	var topics []*models.Topic
+	if (p) * size > len(ft.TopicIDS) && (p-1)*size > len(ft.TopicIDS) {
+		topics = make([]*models.Topic,0)
+	}else if (p) * size > len(ft.TopicIDS) && (p-1)*size < len(ft.TopicIDS) {
+		topics = models.FindTopicByIDS(ft.TopicIDS[(p-1)*size:])
+	}else{
+		topics = models.FindTopicByIDS(ft.TopicIDS[(p-1)*size:(p)*size])
+	}
+	c.Data["Page"] = utils.PageUtil(len(ft.TopicIDS), p, size, &topics)
 	//c.Data["Sections"] = models.FindAllSection()
 	c.Layout = "layout/layout.tpl"
 	c.TplName = "favorite.tpl"

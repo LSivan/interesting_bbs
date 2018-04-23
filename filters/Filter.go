@@ -2,10 +2,11 @@ package filters
 
 import (
 	"git.oschina.net/gdou-geek-bbs/models"
-	"git.oschina.net/gdou-geek-bbs/utils"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
 	"regexp"
+	"git.oschina.net/gdou-geek-bbs/recommend"
+	"strconv"
 )
 
 func IsLogin(ctx *context.Context) (bool, models.User) {
@@ -57,11 +58,9 @@ var withLoginCheck = func(fn func(), ctx *context.Context) {
 var DetailsChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
 	withLoginCheck(
 		func() {
-			ChangeFactor(1, ctx)
+			ChangeFactor(0.5, ctx)
 		}, ctx)
-
 }
-
 var BlackChangeFactor = func(ctx *context.Context) { // 用户拉黑时执行
 	withLoginCheck(
 		func() {
@@ -77,7 +76,13 @@ var CancelBlackChangeFactor = func(ctx *context.Context) { // 用户取消拉黑
 var CollectChangeFactor = func(ctx *context.Context) { // 用户收藏时执行
 	withLoginCheck(
 		func() {
-			ChangeFactor(4, ctx)
+			ChangeFactor(3, ctx)
+		}, ctx)
+}
+var ReplyChangeFactor = func(ctx *context.Context) { // 用户查看话题详情时执行
+	withLoginCheck(
+		func() {
+			ChangeFactor(2, ctx)
 		}, ctx)
 }
 var FilterNoCache = func(ctx *context.Context) {
@@ -93,39 +98,16 @@ var FilterUser = func(ctx *context.Context) {
 	}
 }
 
-func ChangeFactor(changeValue int, ctx *context.Context) {
+func ChangeFactor(changeValue float64, ctx *context.Context) {
 	_, user := IsLogin(ctx)
-	id := ctx.Input.Param(":id")
-	/******** 得到用户以及话题的特征因子和无关因子 *********/
-	userFactor, userFeatureFactorMap, userUnusedFactorMap := getUserFactor(user)
-	topicFactor, topicFeatureFactorMap, topicUnusedFactorMap := getTopicFactor(models.FindTopicById(utils.MustInt(id)))
-	/*
-		用户中与ThingFeatureFactor相同的因子，全部加上因子的变化度；
-		用户中与ThingUnusedFactor相同的因子，全部减去因子的变化度。
-		图书中与UserFeatureFactor相同的因子，全部加上因子的变化度；
-		图书中与UserUnusedFactor相同的因子，全部减去因子的变化度。
-	*/
-	topicFactorChangeMap := make(map[string]int)
-	for factor := range userFeatureFactorMap {
-		topicFactorChangeMap[factor] = changeValue
+	id,err := strconv.Atoi(ctx.Input.Param(":id"))
+	if err != nil {
+		return
 	}
-	for factor := range userUnusedFactorMap {
-		topicFactorChangeMap[factor] = -1 * changeValue
+	topic := models.FindTopicById(id)
+	if &topic == nil {
+		return
 	}
-	models.SaveTmpTopicFactorByMap(topicFactorChangeMap, topicFactor.Id)
-	userFactorChangeMap := make(map[string]int)
-	for factor := range topicFeatureFactorMap {
-		userFactorChangeMap[factor] = changeValue
-	}
-	for factor := range topicUnusedFactorMap {
-		userFactorChangeMap[factor] = -1 * changeValue
-	}
-	models.SaveTmpUserFactorByMap(userFactorChangeMap, userFactor.Id)
-}
+	recommend.ChangeUserFeature(user.Id,changeValue,&topic)
 
-var getUserFactor = func(user models.User) (models.UserFactor, map[string]int, map[string]int) {
-	return models.FindFactorByUser(&user), models.FindFactorByUser(&user).GetTopFactorByType(0), models.FindFactorByUser(&user).GetTopFactorByType(1)
-}
-var getTopicFactor = func(topic models.Topic) (models.TopicFactor, map[string]int, map[string]int) {
-	return models.FindFactorByTopic(&topic), models.FindFactorByTopic(&topic).GetTopFactorByType(0), models.FindFactorByTopic(&topic).GetTopFactorByType(1)
 }

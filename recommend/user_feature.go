@@ -9,8 +9,10 @@ import (
 	"sync"
 	"fmt"
 )
+var DefaultUserFeature UserFeature
 
 func init() {
+	DefaultUserFeature = UserFeature(defaultFeatures)
 	go func() {
 		beego.BeeLogger.Info("watch the user's operations and change his recommend")
 		for {
@@ -25,7 +27,7 @@ func init() {
 				// 假设redis中没有用户的特征值
 				if !common.Redis.HExists("user-feature", strconv.Itoa(topicOperation.userId)).Val() {
 					// 存一个默认的特征值数组到redis中
-					common.Redis.HSet("user-feature", strconv.Itoa(topicOperation.userId), UserFeature(defaultFeature))
+					common.Redis.HSet("user-feature", strconv.Itoa(topicOperation.userId), UserFeature(defaultFeatures))
 				}
 				b, err := common.Redis.HGet("user-feature", strconv.Itoa(topicOperation.userId)).Bytes()
 				if err != nil {

@@ -36,7 +36,7 @@ func init() {
 }
 
 func main() {
-	 //orm.Debug = true // 开启数据库日志
+	 orm.Debug = true // 开启数据库日志
 
 	// 对话题文章进行索引
 	go engine.Indexer.Index()

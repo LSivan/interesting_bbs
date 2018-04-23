@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"sync"
+	"fmt"
 )
 
 type Topic struct {
@@ -130,7 +131,16 @@ func CountTopicFromID(id int) int {
 func FindTopicByIDS(IDS []int) []*Topic {
 	o := orm.NewOrm()
 	var topics []*Topic
-	o.QueryTable(Topic{}).RelatedSel().Filter("id__in", IDS).All(&topics)
+	placeHolder := ""
+	for i := 0;i<len(IDS);i++ {
+		if i != 0 {
+			placeHolder += ","
+		}
+		placeHolder += "?"
+	}
+	sql := fmt.Sprintf("SELECT * FROM bbs.topic where id in (%s) ORDER BY field(id,%s)",placeHolder,placeHolder)
+	o.Raw(sql,IDS,IDS).QueryRows(&topics)
+	//o.QueryTable(Topic{}).RelatedSel().Filter("id__in", IDS).All(&topics)
 	fillTopicFields(&topics)
 	return topics
 }
